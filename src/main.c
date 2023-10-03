@@ -1,83 +1,115 @@
 #include <stm32f1xx.h>
 #include "hardware_config.h"
 #include "gpio.h"
-#include "NRF24L01.h"
 
-// clang-format off
-enum class IRQnSPI
+
+uint8_t spi_transmit(uint16_t data)
 {
-    TXEIE                                       = (1<<7),///<прерываниe по переполнени. приемного буфера FIFO
-    RXNEIE                                      = (1<<6),///<прерываниe по таймауту приемника (буфер FIFO приемника не пуст и не было попыток его чтения в течение времени таймаута)
-    ERRIE                                       = (1<<5),///<прерываниe по заполнению на 50 % и более буфера FIFO приемника
-    NONE                                        = (0<<0)
-};
-
-enum class RegCR1
-{
-    SPI_MODE0                                   = (0b00 ),///<SPI фирмы Motorola(CPOL = 0, CPHA = 0);
-    SPI_MODE1                                   = (0b01 ),///<SPI фирмы Motorola(CPOL = 0, CPHA = 1);
-    SPI_MODE2                                   = (0b10 ),///<SPI фирмы Motorola(CPOL = 1, CPHA = 0);
-    SPI_MODE3                                   = (0b11 ),///<SPI фирмы Motorola(CPOL = 1, CPHA = 1);
-    MASTER                                      = (1<<2 ),///<ведущий модуль
-    SLAVE                                       = (0<<0 ),///<ведомый модуль
-    ACTIVE                                      = (1<<6 ),///<работа разрешена
-    INACTIVE                                    = (0<<0 ),///<работа запрещена;
-    DFF8bit                                     = (0<<0 ),///<data frame format: 8bit;
-    DFF16bit                                    = (1<<11),///<data frame format: 16bit;
-    LSBF                                        = (1<<7 ),///<LSB  transmitted first
-    MSBF                                        = (0<<0 ),///<MSB transmitted first
-};
-enum class RegDMACR
-{
-    RXDMA_DIS                                   = 0x00,///<Запрещено формирование запросов DMA буфера FIFO приемника
-    RXDMA_EN                                    = 0x01,///<Разрешено формирование запросов DMA буфера FIFO приемника
-    TXDMA_DIS                                   = 0x00,///<Запрещено формирование запросов DMA буфера FIFO передатчика
-    TXDMA_EN                                    = 0x02,///<Разрешено формирование запросов DMA буфера FIFO передатчика
-    NONE                                        = 0x00
-};
-
-void SettingsSPI (SPI_TypeDef*SPIx ,RegCR1 SPE,
-                      RegCR1 MS,
-                      double frequency,
-                      RegCR1 Type,
-                      RegCR1 WordSize,
-                      RegCR1 LsbMsbFirst)
-                      {
-   RCC->APB1ENR |= RCC_APB1ENR_SPI2EN  ; // ??? ???????????? SPI
-
-    SPIx->CR1    = 0;
-    SPIx->CR2    = 0;
-    SPIx->SR     = 0;
-    SPIx->CRCPR  = 0;
-    SPIx->RXCRCR = 0;
-    SPIx->TXCRCR = 0;
-    //BRR = static_cast<uint8_t>(log2(F_SPICLK / (Frequency * 1000000)) - 1);
-
-    SPIx->CR1 |=  SPI_CR1_BR;
-    SPIx->CR1 |= static_cast<uint32_t>(Type);
-    SPIx->CR1 |= static_cast<uint32_t>(WordSize);
-    SPIx->CR1 |= static_cast<uint32_t>(LsbMsbFirst);
-    SPIx->CR1 |= SPI_CR1_SSI | SPI_CR1_SSM;
-    SPIx->CR1 |= static_cast<uint32_t>(MS);
-
-   // SPIx->CR2 |= static_cast<uint32_t>(TxDmacr);
-    //SPIx->CR2 |= static_cast<uint32_t>(RxDmacr);
-
-    SPIx->CR1 |= static_cast<uint32_t>(SPE);
-                      }
-
-void spi_transmit(uint16_t data)
-{
-while (!(SPI2->SR & SPI_SR_TXE));
-SPI2->DR = data ;
+while (!(SPI1->SR & SPI_SR_TXE));
+SPI1->DR = data;
+  // Ждём получения данных, читаем их.
+while(!(SPI1->SR&SPI_SR_RXNE)) {}
+data=SPI1->DR;
+return data;
 }
 
+void CS_Select (void)
+{	//HAL_GPIO_WritePin( GPIO_PIN_RESET);
+	Set_pin_L(GPIOA, SPI1_NSS);
+}
 
+void CS_UnSelect (void)
+{	//HAL_GPIO_WritePin(NRF24_CSN_PORT, NRF24_CSN_PIN, GPIO_PIN_SET);
+	Set_pin_H(GPIOA, SPI1_NSS);
+}
+
+void CE_Enable (void)
+{//HAL_GPIO_WritePin(NRF24_CE_PORT, NRF24_CE_PIN, GPIO_PIN_SET);
+	Set_pin_H(GPIOA, SPI1_CE);	
+}
+
+void CE_Disable (void)
+{//HAL_GPIO_WritePin(NRF24_CE_PORT, NRF24_CE_PIN, GPIO_PIN_RESET);
+	Set_pin_L(GPIOA, SPI1_CE);	
+}
+
+void nrf24_WriteReg (uint8_t Reg, uint8_t Data)
+{
+	uint8_t buf[2];
+	buf[0] = Reg|1<<5;
+	buf[1] = Data;
+
+	// Pull the CS Pin LOW to select the device
+	CS_Select();
+	//HAL_SPI_Transmit(NRF24_SPI, buf, 2, 1000);
+    spi_transmit(buf[0]);
+    spi_transmit(buf[1]);
+	// Pull the CS HIGH to release the device
+	CS_UnSelect();
+}
+
+uint8_t nrf24_ReadReg (uint8_t Reg)
+{
+	uint8_t data=0;
+
+	// Pull the CS Pin LOW to select the device
+	CS_Select();
+	data=spi_transmit(Reg);
+	// Pull the CS HIGH to release the device
+	CS_UnSelect();
+	return data;
+}
+
+void spi_init()
+{
+ RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; //--- Включаем тактирование альтернативных функции
+ RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //--- Включаем тактированние SPI1 
+// Указываем полярность и фазу тактового сигнала SPI.
+const uint32_t CPOL=SPI_CR1_CPOL*0;
+const uint32_t CPHA=SPI_CR1_CPHA*0;
+
+// Конфигурируем SPI1 (обычный ведущий режим в данном случае).
+    // BIDIMODE: 0 (выбор режима с одной линией данных - отключено);
+    // BIDIOE: 0 (направление передачи, бит используется при BIDIMODE=1);
+    // CRCEN: 0 (аппаратный подсчёт CRC отключён);
+    // CRCNEXT:0 (отправка CRC, используется при CRCEN=1;
+    // DFF: 0 (длина фрейма данных, здесь - 8-битовый фрейм);
+    // RXONLY: 0 (включение режима "только приём", здесь - полнодуплекс);
+    // SSM: 0 (включение режима программного управления сигналом NSS);
+    // SSI: 0 (значение бита используется вместо сигнала NSS при SSM=1);
+    // LSBFIRST: 0 (порядок передачи битов, здесь - первым передаётся старший);
+    // SPE: 0 (бит включения SPI, здесь разделяем конфигурирование и включение);
+    // BR[2:0] (управление скоростью передачи, только для ведущего;
+            // здесь задаём 0x7, что соотв. макс. делителю /256 и мин. скорости);
+    // MSTR: 1 (бит переключения в ведущий режим).
+    SPI1->CR1=              // Большинство битов задаём нулевыми.
+            SPI_CR1_MSTR|   // Ведущий режим.
+            SPI_CR1_BR|     // BR[2:0]=0x7 - минимальная скорость для теста.
+            CPOL|           // Полярность тактового сигнала.
+            CPHA;           // Фаза тактового сигнала.
+
+    // С помощью регистра CR2 настраиваем генерацию запросов на
+    // прерывание и DMA (если нужно); с помощью бита SSOE запрещаем или
+    // разрешаем использовать ведущему устройству вывод NSS как выход.
+    SPI1->CR2&=~0xE7;       // Сбрасываем все значимые биты регистра.
+    SPI1->CR2|=SPI_CR2_SSOE;// NSS будет выходом.
+
+    // Включаем SPI1.
+    // Передача не начнётся, пока не запишем что-то в его регистр,
+    // данных, но установится состояние выходов.
+    SPI1->CR1|=SPI_CR1_SPE;
+
+}
 
 
 int main(void) 
 {
- gpio_init();
+ //gpio_init();
+ //spi_init();
+ //nrf24_ReadReg(CONFIG);
+uint16_t k=0;
+k++;
+
 
  while(1) 
  {

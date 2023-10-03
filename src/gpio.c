@@ -1,5 +1,7 @@
 #include "stm32f1xx.h"
 #include "hardware_config.h"
+#include "gpio.h"
+
 
 void setupPin(GPIO_TypeDef * port, uint32_t pin, uint32_t mode){
  RCC->APB2ENR |= (1 << (((uint32_t)port - APB2PERIPH_BASE) / 0x400));
@@ -32,23 +34,18 @@ int get_state_Pin (GPIO_TypeDef *port, uint8_t pin)
 	else return 0;
 }
 
+
+
 void gpio_init()
 { 
-  /*
-setupPin(lcd_port,lcd_d0,lcd_mode);
-setupPin(lcd_port,lcd_d1,lcd_mode);
-setupPin(lcd_port,lcd_d2,lcd_mode);
-setupPin(lcd_port,lcd_d3,lcd_mode);
-setupPin(lcd_port,lcd_d4,lcd_mode);
-setupPin(lcd_port,lcd_d5,lcd_mode);
-setupPin(lcd_port,lcd_d6,lcd_mode);
-setupPin(lcd_port,lcd_d7,lcd_mode);
+    // PA4, SPI1_NSS: alt. out, push-pull, high speed
+    // PA5, SPI1_SCK: alt. out, push-pull, high speed
+    // PA6, SPI1_MISO: input, pull up/down
+    // PA7, SPI1_MOSI: alt. out, push-pull, high speed
 
-setupPin(lcd_control_port,lcd_RST,lcd_mode);
-setupPin(lcd_control_port,lcd_CS,lcd_mode);
-setupPin(lcd_control_port,lcd_RS,lcd_mode);
-setupPin(lcd_control_port,lcd_WR,lcd_mode);
-setupPin(lcd_control_port,lcd_RD,lcd_mode);
-//Set_pin_H(lcd_control_port,lcd_RD);
-*/
+setupPin(GPIOA,SPI1_NSS,alternate_mode_pp_50);//SPI1_NSS
+setupPin(GPIOA,SPI1_SCK,alternate_mode_pp_50);//SPI1_SCK
+setupPin(GPIOA,SPI1_MISO,input_mode_pull_down_up);
+setupPin(GPIOA,SPI1_MOSI,alternate_mode_pp_50);
+setupPin(GPIOA,SPI1_MOSI,alternate_mode_pp_50);//SPI_CE
 }
