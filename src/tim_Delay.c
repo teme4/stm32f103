@@ -1,0 +1,51 @@
+#include <stm32f1xx.h>
+#include "tim_Delay.h"
+#include "gpio.h"
+
+uint8_t flag=0;
+
+void SetSysClockTo72(void)
+{
+  SET_BIT(RCC->CR, RCC_CR_HSEON);
+  while(READ_BIT(RCC->CR, RCC_CR_HSERDY == RESET)) {}
+  CLEAR_BIT(FLASH->ACR, FLASH_ACR_PRFTBE);
+  SET_BIT(FLASH->ACR, FLASH_ACR_PRFTBE);
+  MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY, FLASH_ACR_LATENCY_2);
+  MODIFY_REG(RCC->CFGR, RCC_CFGR_HPRE, RCC_CFGR_HPRE_DIV1);
+  MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE2, RCC_CFGR_PPRE2_DIV1);
+  MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE1, RCC_CFGR_PPRE1_DIV2);
+  MODIFY_REG(RCC->CFGR, RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLMULL,RCC_CFGR_PLLSRC | RCC_CFGR_PLLMULL9);
+  SET_BIT(RCC->CR, RCC_CR_PLLON);
+  while(READ_BIT(RCC->CR, RCC_CR_PLLRDY) != (RCC_CR_PLLRDY)) {}
+  MODIFY_REG(RCC->CFGR, RCC_CFGR_SW, RCC_CFGR_SW_PLL);
+  while(READ_BIT(RCC->CFGR, RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) {}
+}
+
+void TIM2_Init(char koef,int period)
+{
+  int z;  
+  if(koef=='m')
+  {
+  z=35999; 
+  }  
+  if(koef=='u')
+  {
+  z=35; 
+  } 
+    if(koef=='s')
+  {
+  z=35999999; 
+  } 
+  SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM2EN);
+  NVIC_EnableIRQ(TIM2_IRQn);
+  WRITE_REG(TIM2->PSC, z);
+  WRITE_REG(TIM2->ARR, period);
+}
+
+void TIM2_IRQHandler(void)
+{
+if(READ_BIT(TIM2->SR, TIM_SR_UIF))
+  {
+CLEAR_BIT(TIM2->SR, TIM_SR_UIF);
+}
+}

@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "stm32f1xx.h": "c",
+        "string.h": "c",
+        "rtc.h": "c",
+        "hardware_config.h": "c",
+        "gpio.h": "c",
+        "tim_delay.h": "c",
+        "uart.h": "c",
+        "stm32f103xe.h": "c",
+        "stm32f103xb.h": "c",
+        "nrf24l01.h": "c"
+    }
+}
