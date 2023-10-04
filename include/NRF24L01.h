@@ -18,21 +18,38 @@
   ***************************************************************************************************************
 */
 
+//NRF pins
+//1 - +3.3V
+//2 - GNG
+//3 - CE
+//4 - CS
+//5 - SCK
+//6 - MOSI
+//7 - MISO
+//8 - IRQ
+
 #ifndef INC_NRF24L01_H_
 #define INC_NRF24L01_H_
 #include <stm32f1xx.h>
 
+void CS_Select (void);
+void CS_UnSelect (void);
+void CE_Enable (void);
+void CE_Disable (void);
 
+void nrf24_WriteReg (uint8_t Reg, uint8_t Data);
+uint8_t nrf24_ReadReg (uint8_t Reg);
+void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size);
+void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size);
+void nrfsendCmd (uint8_t cmd);
+void nrf24_reset(uint8_t REG);
 void NRF24_Init (void);
-
 void NRF24_TxMode (uint8_t *Address, uint8_t channel);
-uint8_t NRF24_Transmit (uint8_t *data);
-
 void NRF24_RxMode (uint8_t *Address, uint8_t channel);
 uint8_t isDataAvailable (int pipenum);
-void NRF24_Receive (uint8_t *data);
 
-void NRF24_ReadAll (uint8_t *data);
+
+
 
 /* Memory Map */
 #define CONFIG      0x00

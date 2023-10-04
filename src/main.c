@@ -1,64 +1,39 @@
 #include <stm32f1xx.h>
 #include "hardware_config.h"
 #include "gpio.h"
-
+#include "NRF24L01.h"
 
 uint8_t spi_transmit(uint16_t data)
 {
 while (!(SPI1->SR & SPI_SR_TXE));
 SPI1->DR = data;
-  // Ждём получения данных, читаем их.
+while(SPI1->SR & SPI_SR_BSY) {}
+while(!(SPI1->SR & SPI_SR_RXNE));// Ждём получения данных, читаем их.
+data=SPI1->DR;
+return data;
+}
+
+
+/*
+void spi_transmit_multi(uint16_t *data)
+{
+while (!(SPI1->SR & SPI_SR_TXE));
+SPI1->DR = data;
+while(!(SPI1->SR&SPI_SR_RXNE)) {}// Ждём получения данных, читаем их.
+data=SPI1->DR;
+return data;
+}*/
+
+void spi_recive(uint16_t data)
+{
 while(!(SPI1->SR&SPI_SR_RXNE)) {}
 data=SPI1->DR;
 return data;
 }
 
-void CS_Select (void)
-{	//HAL_GPIO_WritePin( GPIO_PIN_RESET);
-	Set_pin_L(GPIOA, SPI1_NSS);
-}
 
-void CS_UnSelect (void)
-{	//HAL_GPIO_WritePin(NRF24_CSN_PORT, NRF24_CSN_PIN, GPIO_PIN_SET);
-	Set_pin_H(GPIOA, SPI1_NSS);
-}
 
-void CE_Enable (void)
-{//HAL_GPIO_WritePin(NRF24_CE_PORT, NRF24_CE_PIN, GPIO_PIN_SET);
-	Set_pin_H(GPIOA, SPI1_CE);	
-}
 
-void CE_Disable (void)
-{//HAL_GPIO_WritePin(NRF24_CE_PORT, NRF24_CE_PIN, GPIO_PIN_RESET);
-	Set_pin_L(GPIOA, SPI1_CE);	
-}
-
-void nrf24_WriteReg (uint8_t Reg, uint8_t Data)
-{
-	uint8_t buf[2];
-	buf[0] = Reg|1<<5;
-	buf[1] = Data;
-
-	// Pull the CS Pin LOW to select the device
-	CS_Select();
-	//HAL_SPI_Transmit(NRF24_SPI, buf, 2, 1000);
-    spi_transmit(buf[0]);
-    spi_transmit(buf[1]);
-	// Pull the CS HIGH to release the device
-	CS_UnSelect();
-}
-
-uint8_t nrf24_ReadReg (uint8_t Reg)
-{
-	uint8_t data=0;
-
-	// Pull the CS Pin LOW to select the device
-	CS_Select();
-	data=spi_transmit(Reg);
-	// Pull the CS HIGH to release the device
-	CS_UnSelect();
-	return data;
-}
 
 void spi_init()
 {
@@ -84,9 +59,15 @@ const uint32_t CPHA=SPI_CR1_CPHA*0;
     // MSTR: 1 (бит переключения в ведущий режим).
     SPI1->CR1=              // Большинство битов задаём нулевыми.
             SPI_CR1_MSTR|   // Ведущий режим.
-            SPI_CR1_BR|     // BR[2:0]=0x7 - минимальная скорость для теста.
+            SPI_CR1_BR_2|     // BR[2:0]=0x7 - минимальная скорость для теста.
             CPOL|           // Полярность тактового сигнала.
             CPHA;           // Фаза тактового сигнала.
+        SPI1->CR1 &= ~SPI_CR1_DFF;
+  /*
+  SPI1->CR1 |= 1<<2; //режим мастера  MSTR
+	SPI1->CR1 |= 0b111<<3; //скорость 000 f/2,001 f/4,...,111 f/256   BR [2:0]
+	SPI1->CR1 |= 1<<8; //SSI внутреннее управление слейвом
+	SPI1->CR1 |= 1<<9; //SSM програмное управление слейвом*/
 
     // С помощью регистра CR2 настраиваем генерацию запросов на
     // прерывание и DMA (если нужно); с помощью бита SSOE запрещаем или
@@ -102,17 +83,41 @@ const uint32_t CPHA=SPI_CR1_CPHA*0;
 }
 
 
-int main(void) 
+int main(void)
 {
- //gpio_init();
- //spi_init();
- //nrf24_ReadReg(CONFIG);
-uint16_t k=0;
-k++;
-
-
- while(1) 
+ //SetSysClockTo72();
+ gpio_init();
+ spi_init();
+NRF24_Init();
+volatile uint8_t data=0;
+volatile uint8_t buf_in[32];
+ while(1)
  {
+
+/*
+nrf24_ReadReg_Multi(RX_ADDR_P0, buf_in, 5);
+ data=nrf24_ReadReg(RX_ADDR_P0);
+*/
+
+  data=nrf24_ReadReg(CONFIG);
+  data=0;
+  data=nrf24_ReadReg(EN_AA);
+  data=0;
+  data=nrf24_ReadReg(EN_RXADDR);
+  data=0;
+  data=0;
+  data=nrf24_ReadReg(RX_ADDR_P1);
+  data=0;
+  data=nrf24_ReadReg(RX_ADDR_P2);
+  data=0;
+  data=nrf24_ReadReg(RX_ADDR_P3);
+  data=0;
+  data=nrf24_ReadReg(RX_ADDR_P4);
+  data=0;
+  data=nrf24_ReadReg(RX_ADDR_P5);
+  data=0;
+
+
 
  }
  }

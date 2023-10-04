@@ -37,15 +37,14 @@ int get_state_Pin (GPIO_TypeDef *port, uint8_t pin)
 
 
 void gpio_init()
-{ 
+{
     // PA4, SPI1_NSS: alt. out, push-pull, high speed
     // PA5, SPI1_SCK: alt. out, push-pull, high speed
     // PA6, SPI1_MISO: input, pull up/down
     // PA7, SPI1_MOSI: alt. out, push-pull, high speed
-
-setupPin(GPIOA,SPI1_NSS,alternate_mode_pp_50);//SPI1_NSS
+setupPin(GPIOA,SPI1_NSS,gpio_mode_pp_50);//SPI1_NSS
+setupPin(GPIOA,SPI1_CE,gpio_mode_pp_50);//SPI_CE
 setupPin(GPIOA,SPI1_SCK,alternate_mode_pp_50);//SPI1_SCK
 setupPin(GPIOA,SPI1_MISO,input_mode_pull_down_up);
 setupPin(GPIOA,SPI1_MOSI,alternate_mode_pp_50);
-setupPin(GPIOA,SPI1_MOSI,alternate_mode_pp_50);//SPI_CE
 }
