@@ -9,7 +9,10 @@
     "uart.h": "c",
     "stm32f103xe.h": "c",
     "stm32f103xb.h": "c",
-    "nrf24l01.h": "c"
+    "nrf24l01.h": "c",
+    "drivers.hpp": "c",
+    "dma.hpp": "c",
+    "spi.hpp": "c"
   },
   "C_Cpp_Runner.msvcBatchPath": "",
   "C_Cpp_Runner.cCompilerPath": "gcc",

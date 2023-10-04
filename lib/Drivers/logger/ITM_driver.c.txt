@@ -1,0 +1,214 @@
+/*2015 Петтери Аймонен <jpa@git.mail.kapsi.fi>
+ * Всеобщее достояние
+ *
+ * Этот файл является примером настройки блоков TPIU/DWT/ITM/ETM.
+ * на микроконтроллере Cortex-M3 для отслеживания выполнения. Данные трассировки
+ * вывод с вывода TRACESWO.
+ *
+ * Разработан специально для работы на плате обнаружения STM32 Value Line, но должен
+ * легко адаптируется и к другим доскам. Обратите внимание, что микросхема STM32F100 на
+ * Обнаружение линии стоимости не имеет функции ETM.
+ *
+ * Что это делает:
+ * 1) Настраивает вывод трассировки для вывода трассировки в формате TPIU как из ITM, так и из ETM.
+ * 2) Мигает светодиод во время отслеживания ITM.
+ * 3) Вызывает периодические прерывания, когда запускает пузырьковую сортировку при отслеживании с помощью ETM.
+ */
+
+#include "stm32f1xx.h"
+#include "core_cm3.h"
+
+
+
+int globalCounter; // For watchpoint example
+
+void hardfault_handler(void) { for(;;); }
+
+void configure_tracing()
+{
+/*Специальная конфигурация STM32 для включения вывода TRACESWO IO*/
+    RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+    AFIO->MAPR |= (2 << 24);//Отключите JTAG, чтобы освободить TRACESWO
+    DBGMCU->CR |= DBGMCU_CR_TRACE_IOEN;//Включить контакты трассировки ввода-вывода
+
+    if (!(DBGMCU->CR & DBGMCU_CR_TRACE_IOEN))
+    {
+        //Некоторые (все?) STM32 не разрешают запись в регистр DBGMCU до тех пор, пока
+//Установлен C_DEBUGEN в CoreDebug->DHCSR. Это не может быть установлено
+//Сам ЦП, поэтому на практике вам нужно подключиться к ЦП с помощью
+//отладчик один раз перед его сбросом.
+        return;
+    }
+
+/*Настройка блока интерфейса порта трассировки*/
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;//Разрешаем доступ к регистрам
+    TPI->ACPR = 0;//Часы трассировки = HCLK/(x+1) = 8MHz = скорость передачи данных UART
+//HCLK F105 равен 8 МГц, поэтому x равен 0, а F103 равен 72 МГц, поэтому x равен 8.
+    TPI->SPPR = 2;//Протокол контакта = NRZ/USART
+    TPI->FFCR = 0x102;//кадрирование пакетов TPIU разрешено, когда установлен бит 2.
+//Вы можете использовать 0x100, если вам нужен только DWT/ITM, а не ETM.
+
+    /* Configure PC sampling and exception trace  */
+    DWT->CTRL = (1 << DWT_CTRL_CYCTAP_Pos)//Пределитель для сэмплирования ПК 0 = х64, 1 = х1024
+              | (0 << DWT_CTRL_POSTPRESET_Pos) // Postscaler for PC sampling
+                                                // Divider = value + 1
+              | (1 << DWT_CTRL_PCSAMPLENA_Pos) // Enable PC sampling
+              | (2 << DWT_CTRL_SYNCTAP_Pos)    // Sync packet interval
+                                               // 0 = Off, 1 = Every 2^23 cycles,
+                                               // 2 = Every 2^25, 3 = Every 2^27
+              | (1 << DWT_CTRL_EXCTRCENA_Pos)  // Enable exception trace
+              | (1 << DWT_CTRL_CYCCNTENA_Pos); // Enable cycle counter
+
+    /* Configure instrumentation trace macroblock */
+    ITM->LAR = 0xC5ACCE55;
+    ITM->TCR = (1 << ITM_TCR_TraceBusID_Pos) // Trace bus ID for TPIU
+             | (1 << ITM_TCR_DWTENA_Pos) // Enable events from DWT
+             | (1 << ITM_TCR_SYNCENA_Pos) // Enable sync packets
+             | (1 << ITM_TCR_ITMENA_Pos); // Main enable for ITM
+    ITM->TER = 0xFFFFFFFF; // Enable all stimulus ports
+
+    ///* Configure embedded trace macroblock */
+    //ETM->LAR = 0xC5ACCE55;
+    //ETM_SetupMode();
+    //ETM->CR = ETM_CR_ETMEN // Enable ETM output port
+    //        | ETM_CR_STALL_PROCESSOR // Stall processor when fifo is full
+    //        | ETM_CR_BRANCH_OUTPUT; // Report all branches
+    //     // | ETM_CR_PORTIZE_8BIT;  // Add this code in F103 to set port_size 21, 6, 5, 4 as 0, 0, 0, 1 for 8Bit.
+    //ETM->TRACEIDR = 2; // Trace bus ID for TPIU
+    //ETM->TECR1 = ETM_TECR1_EXCLUDE; // Trace always enabled
+    //ETM->FFRR = ETM_FFRR_EXCLUDE; // Stalling always enabled
+    //ETM->FFLR = 24; // Stall when less than N bytes free in FIFO (range 1..24)
+    //                // Larger values mean less latency in trace, but more stalls.
+    //// ETM->TRIGGER = 0x0000406F; // Add this code in F103 to define the trigger event
+    // ETM->TEEVR = 0x0000006F;   // Add this code in F103 to  define an event to start/stop
+    // Note: we do not enable ETM trace yet, only for specific parts of code.
+}
+
+void configure_watchpoint()
+{
+    /* This is an example of how to configure DWT to monitor a watchpoint.
+       The data value is reported when the watchpoint is hit. */
+
+    /* Monitor all accesses to GPIOC (range length 32 bytes) */
+    DWT->COMP0 = (uint32_t)GPIOC;
+    DWT->MASK0 = 5;
+    DWT->FUNCTION0 = (2 << DWT_FUNCTION_FUNCTION_Pos) // Report data and addr on watchpoint hit
+                   | (1 << DWT_FUNCTION_EMITRANGE_Pos);
+
+    /* Monitor all accesses to globalCounter (range length 4 bytes) */
+    DWT->COMP1 = (uint32_t)&globalCounter;
+    DWT->MASK1 = 2;
+    DWT->FUNCTION1 = (3 << DWT_FUNCTION_FUNCTION_Pos); // Report data and PC on watchpoint hit
+}
+
+//Вывести заданную строку в ITM.
+//Здесь используется 8-битная запись, так как это наиболее распространенный способ записи текста.
+//через ИТМ. В противном случае программное обеспечение ПК не сможет узнать, что именно
+//это текст и какие-то другие данные.
+void ITM_Print(int port, const char *p)
+{
+    if ((ITM->TCR & ITM_TCR_ITMENA_Msk) && (ITM->TER & (1UL << port)))
+    {
+        while (*p)
+        {
+            while (ITM->PORT[port].u32 == 0);
+            ITM->PORT[port].u8 = *p++;
+        }
+    }
+}
+
+//Запишите 32-битное значение в ITM.
+//Это можно использовать как быстрый способ регистрации важных значений из кода.
+void ITM_SendValue (int port, uint32_t value)
+{
+    if ((ITM->TCR & ITM_TCR_ITMENA_Msk) && (ITM->TER & (1UL << port)))
+    {
+        while (ITM->PORT[port].u32 == 0);
+        ITM->PORT[port].u32 = value;
+    }
+}
+
+void delay()
+{
+    for (int i = 0; i < 10000; i++)
+        asm("nop");
+}
+
+void bubble_sort (int *a, int n) {
+    int i, t, s = 1;
+    while (s) {
+        s = 0;
+        for (i = 1; i < n; i++) {
+            if (a[i] < a[i - 1]) {
+                t = a[i];
+                a[i] = a[i - 1];
+                a[i - 1] = t;
+                s = 1;
+            }
+        }
+    }
+}
+
+void TIM2_IRQ()
+{
+    int values[5] = {35,2,235,11,2};
+
+    // We are very interested in how the values get sorted,
+    // so we enable ETM tracing for it.
+    ETM_TraceMode();
+    GPIOC->BSRR = (1 << 9); // Toggle a led so that we can see the latency in ETM trace
+    bubble_sort(values, 5);
+    GPIOC->BRR = (1 << 9);
+    ETM_SetupMode();
+
+    // We can also use ITM to send the result of the sort
+    // Note that we use port 1 here so that output does not get mixed
+    // with port 0 output from main thread.
+    ITM_Print(1, "Sort");
+    for (int i = 0; i < 5; i++)
+        ITM_SendValue(1, values[i]);
+
+    TIM2->SR = 0; // Clear interrupt flag
+}
+
+int main(void)
+{
+    configure_tracing();
+    configure_watchpoint();
+
+    RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
+    GPIOC->CRH = 0x44444433; // GPIOC 8 and 9 as output (STM32F1 discovery leds)
+
+    //RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+    //NVIC_EnableIRQ(TIM2_IRQn);
+    //TIM2->ARR = 50000;
+    //TIM2->DIER = 1;
+    //TIM2->CR1 = 1;
+
+    ITM_Print(0, "Boot");
+
+    globalCounter = 0;
+
+    for (;;)
+    {
+        delay();
+        GPIOC->BSRR = (1 << 8);
+        ITM_Print(0, "On");
+
+        delay();
+        GPIOC->BRR = (1 << 8);
+        ITM_Print(0, "Off");
+
+        globalCounter++; // This will trigger the watchpoint
+    }
+}
+
+
+void* myvectors[]
+__attribute__ ((section("vectors")))= {
+    (void*)0x20002000, // Stack ptr
+    main,       // Reset addr
+    hardfault_handler,
+    hardfault_handler,
+    [16 + TIM2_IRQn] = TIM2_IRQ
+};
