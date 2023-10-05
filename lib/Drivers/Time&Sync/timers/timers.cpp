@@ -52,6 +52,7 @@ extern "C" void SysTick_Handler()
  * @param time
  * @param time_unit
  */
+/*
 void Timers::TimeStart(Timers::Type type, uint32_t time, Timers::Units time_unit)
 {
     SetTimeOutFlag(false);
@@ -63,8 +64,8 @@ void Timers::TimeStart(Timers::Type type, uint32_t time, Timers::Units time_unit
         Time_divider = static_cast<double>(prescaller) / 0xFFFF;
         time         = roundf(static_cast<double>(time) * Time_divider);
         prescaller   = 0xFFFF;
-    }
-
+    }*/
+/*
     RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
     TIM6->CNT = 0;
     TIM6->PSC = prescaller;
@@ -84,22 +85,24 @@ void Timers::TimeStart(Timers::Type type, uint32_t time, Timers::Units time_unit
             TIM6->CR1 |= TIM_CR1_CEN;
             break;
     }
-}
+}*/
 /**
  * @brief
  *
  */
+/*
 void Timers::TimeStop()
 {
     TIM6->CR1 &= ~TIM_CR1_CEN;
     TIM6->CNT = 0;
     SetTimeOutFlag(false);
 }
-
+*/
 /**
  * @brief
  *
  */
+/*
 extern "C" void TIM6_IRQHandler()
 {
     TIM6->SR &= ~TIM_SR_UIF;
@@ -109,7 +112,7 @@ extern "C" void TIM6_IRQHandler()
     if (TIM6->ARR == 2069) NVIC_SystemReset();
 
     Timers::SetTimeOutFlag(true);
-}
+}*/
 
 /**
  * @brief
@@ -117,6 +120,7 @@ extern "C" void TIM6_IRQHandler()
  * @param delay
  * @param time_unit
  */
+/*
 void Timers::delay(uint32_t delay, Timers::Units time_unit)
 {
     if (delay <= 0) delay = 1;
@@ -135,8 +139,9 @@ void Timers::delay(uint32_t delay, Timers::Units time_unit)
     TIM4->EGR |= TIM_EGR_UG;
     TIM4->CR1 |= (TIM_CR1_CEN | TIM_CR1_OPM);
     while ((TIM4->CR1 & TIM_CR1_CEN)) {}
-}
+}*/
 
+/*
 void Timers::delay(uint32_t delay, uint32_t time_unit)
 {
     if (delay <= 0) delay = 1;
@@ -155,8 +160,9 @@ void Timers::delay(uint32_t delay, uint32_t time_unit)
     TIM4->EGR |= TIM_EGR_UG;
     TIM4->CR1 |= (TIM_CR1_CEN | TIM_CR1_OPM);
     while ((TIM4->CR1 & TIM_CR1_CEN)) {}
-}
+}*/
 
+/*
 void Timers::Indication(OnOff mode)
 {
     RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
@@ -186,8 +192,8 @@ void Timers::Indication(OnOff mode)
     TIM7->ARR = period;
     TIM7->DIER |= TIM_DIER_UIE;
     TIM7->CR1 |= TIM_CR1_CEN;
-}
-
+}*/
+/*
 void Timers::SetColor(Color color)
 {
     if (!GreenLed || !RedLed) return;
@@ -213,7 +219,8 @@ void Timers::SetColor(Color color)
         default: break;
     }
 }
-
+*/
+/*
 void Timers::Blink(Color color)
 {
 #if (_BOARD_RELEASE == _v3_0)
@@ -229,4 +236,4 @@ void Timers::Blink(Color color)
 
     enable = !enable;
 #endif
-}
+}*/

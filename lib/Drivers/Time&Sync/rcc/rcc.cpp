@@ -130,8 +130,8 @@ ClockSystem::ClockSystem(PINx &MCO, UARTLines &baremetal)
     RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
     RCC->APB2ENR |= RCC_APB2ENR_IOPDEN;
     RCC->APB2ENR |= RCC_APB2ENR_IOPEEN;
-    RCC->APB2ENR |= RCC_APB2ENR_IOPFEN;
-    RCC->APB2ENR |= RCC_APB2ENR_IOPGEN;
+    /*RCC->APB2ENR |= RCC_APB2ENR_IOPFEN;
+    RCC->APB2ENR |= RCC_APB2ENR_IOPGEN;*/
 
     GPIOA->CRL &= ~(GPIO_CRL_CNF | GPIO_CRL_MODE);
     GPIOA->CRH &= ~(GPIO_CRH_CNF | GPIO_CRH_MODE);
@@ -148,11 +148,11 @@ ClockSystem::ClockSystem(PINx &MCO, UARTLines &baremetal)
     GPIOE->CRL &= ~(GPIO_CRL_CNF | GPIO_CRL_MODE);
     GPIOE->CRH &= ~(GPIO_CRH_CNF | GPIO_CRH_MODE);
 
-    GPIOF->CRL &= ~(GPIO_CRL_CNF | GPIO_CRL_MODE);
+    /*GPIOF->CRL &= ~(GPIO_CRL_CNF | GPIO_CRL_MODE);
     GPIOF->CRH &= ~(GPIO_CRH_CNF | GPIO_CRH_MODE);
 
     GPIOG->CRL &= ~(GPIO_CRL_CNF | GPIO_CRL_MODE);
-    GPIOG->CRH &= ~(GPIO_CRH_CNF | GPIO_CRH_MODE);
+    GPIOG->CRH &= ~(GPIO_CRH_CNF | GPIO_CRH_MODE);*/
 
     /*Termocontroller PWM*/
     DBGMCU->CR |= DBGMCU_CR_DBG_TIM1_STOP;
@@ -163,13 +163,13 @@ ClockSystem::ClockSystem(PINx &MCO, UARTLines &baremetal)
     /*Timers::delay()*/
     DBGMCU->CR |= DBGMCU_CR_DBG_TIM4_STOP;
     /*Vacancy*/
-    DBGMCU->CR &= ~DBGMCU_CR_DBG_TIM5_STOP;
+    //DBGMCU->CR &= ~DBGMCU_CR_DBG_TIM5_STOP;
     /*Timers::TimeOut()*/
-    DBGMCU->CR |= DBGMCU_CR_DBG_TIM6_STOP;
+    //DBGMCU->CR |= DBGMCU_CR_DBG_TIM6_STOP;
     /*Timers::EnableIndication*/
-    DBGMCU->CR &= ~DBGMCU_CR_DBG_TIM7_STOP;
+    //DBGMCU->CR &= ~DBGMCU_CR_DBG_TIM7_STOP;
     /*Invertor NVOA PWM*/
-    DBGMCU->CR &= ~DBGMCU_CR_DBG_TIM8_STOP;
+    //DBGMCU->CR &= ~DBGMCU_CR_DBG_TIM8_STOP;
     /**/
     DBGMCU->CR |= DBGMCU_CR_DBG_IWDG_STOP;
 

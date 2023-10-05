@@ -59,7 +59,7 @@ bool UART::HardwareSettings()
         else if ((_TxD->_GPIOx == GPIOD) && (_RxD->_GPIOx == GPIOD))
             AFIO->MAPR |= AFIO_MAPR_USART3_REMAP_FULLREMAP;
     }
-    else if (UARTx == UART4)
+    /*else if (UARTx == UART4)
     {
         RCC->APB1ENR |= RCC_APB1ENR_UART4EN;
         _vectorIRQn      = UART4_IRQn;
@@ -70,7 +70,7 @@ bool UART::HardwareSettings()
         RCC->APB1ENR |= RCC_APB1ENR_UART5EN;
         _vectorIRQn      = UART5_IRQn;
         APBxBusClockFreq = ClockSystem::APB1BusClock;
-    }
+    }*/
 
     SettingsAccident += !_TxD->Settings(TYPE::OUTPUT_AFO_Push_Pull);
     SettingsAccident += !_RxD->Settings(TYPE::INPUT_Pull_Down, LVL::HIGH);

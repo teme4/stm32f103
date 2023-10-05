@@ -18,9 +18,9 @@
   ***************************************************************************************************************
 */
 
-#include "NRF24L01.h"
+#include "NRF24L01.hpp"
 #include <stm32f1xx.h>
-#include "gpio.h"
+#include "gpio.hpp"
 
 
 void CS_Select (void)
@@ -43,6 +43,15 @@ void CE_Disable (void)
 	Set_pin_L(GPIOA, SPI1_CE);
 }
 
+uint8_t spi_transmit(uint8_t data)
+{
+while (!(SPI1->SR & SPI_SR_TXE));
+SPI1->DR = data;
+while(SPI1->SR & SPI_SR_BSY) {}
+while(!(SPI1->SR & SPI_SR_RXNE));// Ждём получения данных, читаем их.
+data=SPI1->DR;
+return data;
+}
 
 
 void nrf24_WriteReg (uint8_t Reg, uint8_t Data)
@@ -78,7 +87,7 @@ void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size)
 	spi_transmit(buf);
 	for(int i=0;i<size;i++)
 	{
-		spi_transmit(data);
+		spi_transmit(data[i]);
 	}
 	CS_UnSelect();
 }
@@ -86,10 +95,10 @@ void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size)
 
 
 /* Read multiple bytes from the register */
-
+/*
 void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size)
 {
-	volatile buf[32]={0,};
+	volatile uint8_t buf[32]={0,};
 	CS_Select();
     data=spi_transmit(Reg | R_REGISTER);
   if (data!=STATUS)//если адрес равен адрес регистра статус то и возварщаем его состояние
@@ -100,7 +109,7 @@ void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size)
 	}
   }
 	CS_UnSelect();
-}
+}*/
 
 
 

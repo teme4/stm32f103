@@ -1,6 +1,6 @@
 #include "stm32f1xx.h"
 #include "hardware_config.h"
-#include "gpio.h"
+#include "gpio.hpp"
 
 
 void setupPin(GPIO_TypeDef * port, uint32_t pin, uint32_t mode){

@@ -1,20 +1,13 @@
 #include <stm32f1xx.h>
+
 #include "hardware_config.h"
-#include "gpio.h"
-#include "NRF24L01.h"
+#include "gpio.hpp"
+#include "NRF24L01.hpp"
+
 #include <DigitalInterface/drivers.hpp>
 
 
 
-uint8_t spi_transmit(uint16_t data)
-{
-while (!(SPI1->SR & SPI_SR_TXE));
-SPI1->DR = data;
-while(SPI1->SR & SPI_SR_BSY) {}
-while(!(SPI1->SR & SPI_SR_RXNE));// Ждём получения данных, читаем их.
-data=SPI1->DR;
-return data;
-}
 
 
 /*
@@ -31,7 +24,7 @@ void spi_recive(uint16_t data)
 {
 while(!(SPI1->SR&SPI_SR_RXNE)) {}
 data=SPI1->DR;
-return data;
+//return data;
 }
 
 
@@ -82,7 +75,6 @@ const uint32_t CPHA=SPI_CR1_CPHA*0;
     // Передача не начнётся, пока не запишем что-то в его регистр,
     // данных, но установится состояние выходов.
     SPI1->CR1|=SPI_CR1_SPE;
-
 }
 
 
@@ -91,8 +83,10 @@ int main(void)
  //SetSysClockTo72();
  gpio_init();
  spi_init();
-NRF24_Init();
-volatile uint8_t data=0;
+ NRF24_Init();
+
+    
+volatile uint8_t data[32]={0,};
 volatile uint8_t buf_in[32];
  while(1)
  {
@@ -102,24 +96,17 @@ nrf24_ReadReg_Multi(RX_ADDR_P0, buf_in, 5);
  data=nrf24_ReadReg(RX_ADDR_P0);
 */
 
-  data=nrf24_ReadReg(CONFIG);
-  data=0;
-  data=nrf24_ReadReg(EN_AA);
-  data=0;
-  data=nrf24_ReadReg(EN_RXADDR);
-  data=0;
-  data=0;
-  data=nrf24_ReadReg(RX_ADDR_P1);
-  data=0;
-  data=nrf24_ReadReg(RX_ADDR_P2);
-  data=0;
-  data=nrf24_ReadReg(RX_ADDR_P3);
-  data=0;
-  data=nrf24_ReadReg(RX_ADDR_P4);
-  data=0;
-  data=nrf24_ReadReg(RX_ADDR_P5);
-  data=0;
 
+  data[0]=nrf24_ReadReg(CONFIG);
+  data[1]=nrf24_ReadReg(EN_AA);
+  data[2]=nrf24_ReadReg(EN_RXADDR);
+  data[3]=nrf24_ReadReg(RX_ADDR_P1);
+  data[4]=nrf24_ReadReg(RX_ADDR_P2);
+  data[5]=nrf24_ReadReg(RX_ADDR_P3);
+  data[6]=nrf24_ReadReg(RX_ADDR_P4);
+  data[7]=nrf24_ReadReg(RX_ADDR_P5);
+  
+data[30]=55+56;
 
 
  }

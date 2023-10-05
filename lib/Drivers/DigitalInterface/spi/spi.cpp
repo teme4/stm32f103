@@ -206,12 +206,12 @@ bool SPI::ClockSettingSPI()
         RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
         return true;
     }
-    if (SPIx == SPI3)
+    /*if (SPIx == SPI3)
     {
         F_SPICLK = ClockSystem::APB2BusClock;
         RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
         return true;
-    }
+    }*/
     return false;
 }
 
