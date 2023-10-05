@@ -9,7 +9,6 @@
 
 
 
-
 /*
 void spi_transmit_multi(uint16_t *data)
 {
@@ -77,15 +76,51 @@ const uint32_t CPHA=SPI_CR1_CPHA*0;
     SPI1->CR1|=SPI_CR1_SPE;
 }
 
+#define tr 0x05f
 
 int main(void)
 {
  //SetSysClockTo72();
- gpio_init();
- spi_init();
- NRF24_Init();
+ //gpio_init();
+ //spi_init();
 
-    
+PINx spi_nrf24_mosi(GPIOA,5);
+PINx spi_nrf24_miso(GPIOA,4);
+PINx spi_nrf24_sck(GPIOA,3);
+PINx spi_nrf24_cs(GPIOA,2);
+
+SPILines nrf{ .SPIx=SPI1,
+              .MOSI=spi_nrf24_mosi,
+              .MISO=spi_nrf24_miso,
+              .SCLK=spi_nrf24_sck,
+              .NSS=spi_nrf24_cs,
+              };
+
+SPI spi_1(nrf);
+
+
+spi_1.SettingsSPI(
+            RegCR1::ACTIVE,
+            RegCR1::MASTER,
+            2,
+            RegCR1::SPI_MODE1,
+            RegCR1::DFF8bit,
+            RegCR1::MSBF,
+            0,
+            0,
+            0);
+/*
+void SPI::SettingsSPI(RegCR1 SPE,
+                      RegCR1 MS,
+                      double frequency,
+                      RegCR1 Type,
+                      RegCR1 WordSize,
+                      RegCR1 LsbMsbFirst,
+                      std::vector<IRQnSPI> irq,
+                      RegDMACR TxDmacr,
+                      RegDMACR RxDmacr)*/
+
+ NRF24_Init();
 volatile uint8_t data[32]={0,};
 volatile uint8_t buf_in[32];
  while(1)

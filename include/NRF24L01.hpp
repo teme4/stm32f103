@@ -43,7 +43,7 @@ uint8_t nrf24_ReadReg (uint8_t Reg);
 void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size);
 void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size);
 void nrfsendCmd (uint8_t cmd);
-void nrf24_reset(uint8_t REG);
+uint8_t nrf24_reset(uint8_t REG);
 void NRF24_Init (void);
 void NRF24_TxMode (uint8_t *Address, uint8_t channel);
 void NRF24_RxMode (uint8_t *Address, uint8_t channel);

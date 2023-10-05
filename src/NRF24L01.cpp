@@ -122,8 +122,9 @@ void nrfsendCmd (uint8_t cmd)
 }
 
 
-void nrf24_reset(uint8_t REG)
+uint8_t nrf24_reset(uint8_t REG)
 {
+	volatile uint8_t check=0;
 	if (REG == STATUS)
 	{
 		nrf24_WriteReg(STATUS, 0x00);
@@ -136,6 +137,12 @@ void nrf24_reset(uint8_t REG)
 
 	else {
 	nrf24_WriteReg(CONFIG, 0x08);
+	check=nrf24_ReadReg(CONFIG);
+	if(check!=0x08)
+	{
+		return 0;
+	}
+	
 	nrf24_WriteReg(EN_AA, 0x3F);
 	nrf24_WriteReg(EN_RXADDR, 0x03);
 	nrf24_WriteReg(SETUP_AW, 0x03);
