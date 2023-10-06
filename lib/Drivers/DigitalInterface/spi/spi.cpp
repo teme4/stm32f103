@@ -192,13 +192,13 @@ bool SPI::ClockSettingSPI()
         F_SPICLK = ClockSystem::APB2BusClock;
         RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
 
-        //  if ((_pinMOSI->_GPIOx == GPIOA) && (_pinMISO->_GPIOx == GPIOA) &&
-        //      (_pinSCLK->_GPIOx == GPIOA))
-        //      AFIO->MAPR &= ~AFIO_MAPR_SPI1_REMAP;
+          if ((_pinMOSI->_GPIOx == GPIOA) && (_pinMISO->_GPIOx == GPIOA) &&
+             (_pinSCLK->_GPIOx == GPIOA))
+             AFIO->MAPR &= ~AFIO_MAPR_SPI1_REMAP;
         //  else if ((_pinMOSI->_GPIOx == GPIOB) && (_pinMISO->_GPIOx == GPIOB) &&
         //           (_pinSCLK->_GPIOx == GPIOB))
         //      AFIO->MAPR |= AFIO_MAPR_SPI1_REMAP;
-        //  return true;
+      return true;
     }
     if (SPIx == SPI2)
     {

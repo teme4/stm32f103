@@ -1,6 +1,5 @@
-#include <stm32f1xx.h>
-#include "tim_Delay.h"
-#include "gpio.hpp"
+#include "tim_Delay.hpp"
+
 
 uint8_t flag=0;
 
@@ -19,6 +18,7 @@ void SetSysClockTo72(void)
   while(READ_BIT(RCC->CR, RCC_CR_PLLRDY) != (RCC_CR_PLLRDY)) {}
   MODIFY_REG(RCC->CFGR, RCC_CFGR_SW, RCC_CFGR_SW_PLL);
   while(READ_BIT(RCC->CFGR, RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) {}
+  SystemCoreClockUpdate();
 }
 
 void TIM2_Init(char koef,int period)

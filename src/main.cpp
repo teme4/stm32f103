@@ -1,93 +1,38 @@
 #include <stm32f1xx.h>
-
-#include "hardware_config.h"
-#include "gpio.hpp"
 #include "NRF24L01.hpp"
+#include "tim_Delay.hpp"
 
 #include <DigitalInterface/drivers.hpp>
+#include <Time&Sync/drivers.hpp>
 
-
-
-
-/*
-void spi_transmit_multi(uint16_t *data)
-{
-while (!(SPI1->SR & SPI_SR_TXE));
-SPI1->DR = data;
-while(!(SPI1->SR&SPI_SR_RXNE)) {}// Ждём получения данных, читаем их.
-data=SPI1->DR;
-return data;
-}*/
-
-void spi_recive(uint16_t data)
-{
-while(!(SPI1->SR&SPI_SR_RXNE)) {}
-data=SPI1->DR;
-//return data;
-}
-
-
-
-
-
-void spi_init()
-{
- RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; //--- Включаем тактирование альтернативных функции
- RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; //--- Включаем тактированние SPI1 
-// Указываем полярность и фазу тактового сигнала SPI.
-const uint32_t CPOL=SPI_CR1_CPOL*0;
-const uint32_t CPHA=SPI_CR1_CPHA*0;
-
-// Конфигурируем SPI1 (обычный ведущий режим в данном случае).
-    // BIDIMODE: 0 (выбор режима с одной линией данных - отключено);
-    // BIDIOE: 0 (направление передачи, бит используется при BIDIMODE=1);
-    // CRCEN: 0 (аппаратный подсчёт CRC отключён);
-    // CRCNEXT:0 (отправка CRC, используется при CRCEN=1;
-    // DFF: 0 (длина фрейма данных, здесь - 8-битовый фрейм);
-    // RXONLY: 0 (включение режима "только приём", здесь - полнодуплекс);
-    // SSM: 0 (включение режима программного управления сигналом NSS);
-    // SSI: 0 (значение бита используется вместо сигнала NSS при SSM=1);
-    // LSBFIRST: 0 (порядок передачи битов, здесь - первым передаётся старший);
-    // SPE: 0 (бит включения SPI, здесь разделяем конфигурирование и включение);
-    // BR[2:0] (управление скоростью передачи, только для ведущего;
-            // здесь задаём 0x7, что соотв. макс. делителю /256 и мин. скорости);
-    // MSTR: 1 (бит переключения в ведущий режим).
-    SPI1->CR1=              // Большинство битов задаём нулевыми.
-            SPI_CR1_MSTR|   // Ведущий режим.
-            SPI_CR1_BR_2|     // BR[2:0]=0x7 - минимальная скорость для теста.
-            CPOL|           // Полярность тактового сигнала.
-            CPHA;           // Фаза тактового сигнала.
-        SPI1->CR1 &= ~SPI_CR1_DFF;
-  /*
-  SPI1->CR1 |= 1<<2; //режим мастера  MSTR
-	SPI1->CR1 |= 0b111<<3; //скорость 000 f/2,001 f/4,...,111 f/256   BR [2:0]
-	SPI1->CR1 |= 1<<8; //SSI внутреннее управление слейвом
-	SPI1->CR1 |= 1<<9; //SSM програмное управление слейвом*/
-
-    // С помощью регистра CR2 настраиваем генерацию запросов на
-    // прерывание и DMA (если нужно); с помощью бита SSOE запрещаем или
-    // разрешаем использовать ведущему устройству вывод NSS как выход.
-    SPI1->CR2&=~0xE7;       // Сбрасываем все значимые биты регистра.
-    SPI1->CR2|=SPI_CR2_SSOE;// NSS будет выходом.
-
-    // Включаем SPI1.
-    // Передача не начнётся, пока не запишем что-то в его регистр,
-    // данных, но установится состояние выходов.
-    SPI1->CR1|=SPI_CR1_SPE;
-}
-
-#define tr 0x05f
-
+ std::array<uint8_t,5> data;
+uint8_t *ptr;
 int main(void)
 {
  //SetSysClockTo72();
  //gpio_init();
  //spi_init();
 
+/*
 PINx spi_nrf24_mosi(GPIOA,5);
 PINx spi_nrf24_miso(GPIOA,4);
 PINx spi_nrf24_sck(GPIOA,3);
 PINx spi_nrf24_cs(GPIOA,2);
+#define SPI1_CE    4
+#define SPI1_NSS   3
+#define SPI1_SCK   5
+#define SPI1_MISO  6
+#define SPI1_MOSI  7*/
+PINx pin_mco(GPIOA,8);
+UARTLines uart_log{   USART1,2000000,
+                      PINx(GPIOA,9),
+                      PINx(GPIOA,10)};
+ClockSystem clock(pin_mco, uart_log);
+
+PINx spi_nrf24_mosi(GPIOA,7);
+PINx spi_nrf24_miso(GPIOA,6);
+PINx spi_nrf24_sck(GPIOA,5);
+PINx spi_nrf24_cs(GPIOA,3);
 
 SPILines nrf{ .SPIx=SPI1,
               .MOSI=spi_nrf24_mosi,
@@ -95,43 +40,45 @@ SPILines nrf{ .SPIx=SPI1,
               .SCLK=spi_nrf24_sck,
               .NSS=spi_nrf24_cs,
               };
-
-SPI spi_1(nrf);
-
-
-spi_1.SettingsSPI(
+SPI spi_nrf24L01(nrf);
+spi_nrf24L01.SettingsSPI(
             RegCR1::ACTIVE,
             RegCR1::MASTER,
             2,
-            RegCR1::SPI_MODE1,
+            RegCR1::SPI_MODE0,
             RegCR1::DFF8bit,
             RegCR1::MSBF,
-            0,
-            0,
-            0);
-/*
-void SPI::SettingsSPI(RegCR1 SPE,
-                      RegCR1 MS,
-                      double frequency,
-                      RegCR1 Type,
-                      RegCR1 WordSize,
-                      RegCR1 LsbMsbFirst,
-                      std::vector<IRQnSPI> irq,
-                      RegDMACR TxDmacr,
-                      RegDMACR RxDmacr)*/
+            {},
+            RegDMACR::TXDMA_DIS,
+            RegDMACR::RXDMA_DIS);
 
- NRF24_Init();
-volatile uint8_t data[32]={0,};
-volatile uint8_t buf_in[32];
+/*UART debug(UART1,
+                      baremetal.BaudRate,
+                      std::make_unique<PINx>(baremetal.TxD),
+                      std::make_unique<PINx>(baremetal.RxD));*/
+
+ static std::vector<uint8_t> Packet{};
+ Packet.clear();
+ Packet.resize(2);
+ Packet.at(0)=CONFIG|W_REGISTER;
+ Packet.at(1)=0x08;
+ spi_nrf24L01.Transmitt(Packet);
+ data.at(0)=Packet.at(0);
+ Packet.resize(2);
+ Packet.at(0)=CONFIG|R_REGISTER;
+ Packet.at(1)=0x00;
+ spi_nrf24L01.Recieve(Packet);
+ptr= reinterpret_cast<uint8_t*>(Packet.data());
+
+data.at(0)=Packet.at(0);
+data.at(1)=Packet.at(1);
+/*
+NRF24_Init();
+*/
  while(1)
  {
-
+ Packet.at(1)=0x08;
 /*
-nrf24_ReadReg_Multi(RX_ADDR_P0, buf_in, 5);
- data=nrf24_ReadReg(RX_ADDR_P0);
-*/
-
-
   data[0]=nrf24_ReadReg(CONFIG);
   data[1]=nrf24_ReadReg(EN_AA);
   data[2]=nrf24_ReadReg(EN_RXADDR);
@@ -141,7 +88,7 @@ nrf24_ReadReg_Multi(RX_ADDR_P0, buf_in, 5);
   data[6]=nrf24_ReadReg(RX_ADDR_P4);
   data[7]=nrf24_ReadReg(RX_ADDR_P5);
   
-data[30]=55+56;
+data[30]=55+56;*/
 
 
  }

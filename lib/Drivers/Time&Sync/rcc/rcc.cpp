@@ -26,13 +26,8 @@ ClockSystem::ClockSystem(PINx &MCO, UARTLines &baremetal)
     RCC->CR &= ~RCC_CR_PLLON;// PLL Disable
     while ((RCC->CR & RCC_CR_PLLON)) {}
 
-#if (_BOARD_RELEASE == _v3_0)
+
     RCC->CFGR &= ~RCC_CFGR_PLLSRC;// HSI oscillator clock / 2 selected as PLL input clock
-
-    RCC->CFGR |= RCC_CFGR_PLLMULL9;// PLL input clock x9 = 36MHz
-    RCC->CR |= RCC_CR_PLLON;       // PLL Enable
-    while (!(RCC->CR & RCC_CR_PLLON)) {}
-
     FLASH->ACR &= ~FLASH_ACR_PRFTBE;  //- 0 wait states, if 0 < SYSCLK ≤ 24 MHz
     FLASH->ACR |= FLASH_ACR_LATENCY_1;//- 1 wait state, if 24 MHz < SYSCLK ≤ 48 MHz
     FLASH->ACR |= FLASH_ACR_PRFTBE;   //- 2 wait states, if 48 MHz < SYSCLK ≤ 72 MHz
@@ -41,7 +36,7 @@ ClockSystem::ClockSystem(PINx &MCO, UARTLines &baremetal)
     RCC->CFGR |= RCC_CFGR_PPRE1_DIV1; // APB Low-speed prescaler (APB1) = 36MHz/1 = 36MHz
     RCC->CFGR |= RCC_CFGR_PPRE2_DIV1; // APB high-speed prescaler(APB2) = 36MHz/1 = 36MHz
     RCC->CFGR |= RCC_CFGR_ADCPRE_DIV4;// ADC = 36MHz/4 = 9MHz
-#else
+
 
     RCC->CR |= RCC_CR_HSEON;// HSE Enable
     int i{100000};
@@ -90,7 +85,7 @@ ClockSystem::ClockSystem(PINx &MCO, UARTLines &baremetal)
      ***************************************************************************************************/
     RCC->CFGR |= RCC_CFGR_ADCPRE_DIV4;
 
-#endif
+
 
     RCC->CFGR |= RCC_CFGR_SW_PLL;         // PLL -> SYSCKLK
     while (!(RCC->CFGR & RCC_CFGR_SWS)) {}// wait PLL used as system clock

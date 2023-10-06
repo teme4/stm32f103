@@ -19,6 +19,7 @@
 #include <vector>
 #include <array>
 
+#define _LOGGER_EN_ 1
 #if (_LOGGER_EN_)
 
 #ifndef MESSAGE
