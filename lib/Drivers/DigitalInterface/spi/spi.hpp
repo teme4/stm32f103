@@ -118,6 +118,7 @@ class SPI : public DigitalInterface
             _pinSCLK(std::make_unique<PINx>(baremetal.SCLK)),
             _pinNSS(std::make_unique<PINx>(baremetal.NSS))
     {
+        if (!ClockSettingSPI()) return;
         HardwareSettings();
     }
     SPI()                       = default;
