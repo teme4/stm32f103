@@ -5,14 +5,77 @@
 #include <DigitalInterface/drivers.hpp>
 #include <Time&Sync/drivers.hpp>
 
- std::array<uint8_t,5> data;
-uint8_t *ptr;
+
+ static std::array<uint8_t,5> data;
+
+
+
+ PINx pin_mco(GPIOA,8);
+UARTLines uart_log{   USART1,2000000,
+                      PINx(GPIOA,9),
+                      PINx(GPIOA,10)};
+ ClockSystem clock(pin_mco, uart_log);
+
+ PINx spi_nrf24_mosi(GPIOA,7);
+ PINx spi_nrf24_miso(GPIOA,6);
+ PINx spi_nrf24_sck(GPIOA,5);
+ PINx spi_nrf24_cs(GPIOA,3);
+
+ SPILines nrf{ .SPIx=SPI1,
+              .MOSI=spi_nrf24_mosi,
+              .MISO=spi_nrf24_miso,
+              .SCLK=spi_nrf24_sck,
+              .NSS=spi_nrf24_cs,
+              };
+ SPI spi_nrf24L01(nrf);
+
+void nrf24_Read_Reg(uint8_t reg,uint8_t size)
+{
+ std::array<uint8_t,1> data;
+  uint8_t *ptr;
+  std::vector<uint8_t> Buffer_rx;
+ Buffer_rx.resize(size+1);
+ Buffer_rx.at(0)=reg|R_REGISTER;
+ spi_nrf24L01.Recieve(Buffer_rx);
+ //ptr= reinterpret_cast<uint8_t*>(Buffer_rx.data());
+ volatile uint8_t size2=Buffer_rx.size();
+ for (uint8_t i=0;i<size2;i++)
+ {
+  data[i]=Buffer_rx.at(i);
+ }
+
+  
+ Buffer_rx.at(0)=0;
+}
+void nrf24_Write_Reg(uint8_t reg,uint8_t value)
+{
+ static std::vector<uint8_t> Buffer_tx;
+ Buffer_tx.clear();
+ Buffer_tx.resize(2);
+ Buffer_tx.at(0)=reg|W_REGISTER;
+ Buffer_tx.at(1)=value;
+ spi_nrf24L01.Transmitt(Buffer_tx);
+}
+
+
+
 int main(void)
 {
- //SetSysClockTo72();
- //gpio_init();
- //spi_init();
+spi_nrf24L01.SettingsSPI(
+            RegCR1::ACTIVE,
+            RegCR1::MASTER,
+            2,
+            RegCR1::SPI_MODE0,
+            RegCR1::DFF8bit,
+            RegCR1::MSBF,
+            {},
+            RegDMACR::TXDMA_DIS,
+            RegDMACR::RXDMA_DIS);
 
+/*UART debug(USART1,
+                     115200,
+                      std::make_unique<PINx>(GPIOA,9),
+                      std::make_unique<PINx>(GPIOA,10));*/
 /*
 PINx spi_nrf24_mosi(GPIOA,5);
 PINx spi_nrf24_miso(GPIOA,4);
@@ -23,6 +86,7 @@ PINx spi_nrf24_cs(GPIOA,2);
 #define SPI1_SCK   5
 #define SPI1_MISO  6
 #define SPI1_MOSI  7*/
+/*
 PINx pin_mco(GPIOA,8);
 UARTLines uart_log{   USART1,2000000,
                       PINx(GPIOA,9),
@@ -52,44 +116,38 @@ spi_nrf24L01.SettingsSPI(
             RegDMACR::TXDMA_DIS,
             RegDMACR::RXDMA_DIS);
 
-/*UART debug(UART1,
-                      baremetal.BaudRate,
-                      std::make_unique<PINx>(baremetal.TxD),
-                      std::make_unique<PINx>(baremetal.RxD));*/
+UART debug(USART1,
+                     115200,
+                      std::make_unique<PINx>(GPIOA,9),
+                      std::make_unique<PINx>(GPIOA,10));
 
+                      */
+
+
+
+/*
  static std::vector<uint8_t> Packet{};
+ //Отправить
  Packet.clear();
  Packet.resize(2);
  Packet.at(0)=CONFIG|W_REGISTER;
  Packet.at(1)=0x08;
  spi_nrf24L01.Transmitt(Packet);
+ //Принять
  data.at(0)=Packet.at(0);
  Packet.resize(2);
  Packet.at(0)=CONFIG|R_REGISTER;
  Packet.at(1)=0x00;
  spi_nrf24L01.Recieve(Packet);
-ptr= reinterpret_cast<uint8_t*>(Packet.data());
-
-data.at(0)=Packet.at(0);
-data.at(1)=Packet.at(1);
-/*
-NRF24_Init();
+//ptr= reinterpret_cast<uint8_t*>(Packet.data());
 */
+nrf24_Write_Reg(CONFIG,0x06);
+nrf24_Read_Reg(CONFIG,1);
+uint16_t k=0;
+k++;
+
  while(1)
  {
- Packet.at(1)=0x08;
-/*
-  data[0]=nrf24_ReadReg(CONFIG);
-  data[1]=nrf24_ReadReg(EN_AA);
-  data[2]=nrf24_ReadReg(EN_RXADDR);
-  data[3]=nrf24_ReadReg(RX_ADDR_P1);
-  data[4]=nrf24_ReadReg(RX_ADDR_P2);
-  data[5]=nrf24_ReadReg(RX_ADDR_P3);
-  data[6]=nrf24_ReadReg(RX_ADDR_P4);
-  data[7]=nrf24_ReadReg(RX_ADDR_P5);
-  
-data[30]=55+56;*/
-
 
  }
  }

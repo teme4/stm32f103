@@ -20,37 +20,12 @@
 
 #include "NRF24L01.hpp"
 #include <stm32f1xx.h>
-#include "gpio.hpp"
 
-
-void CS_Select (void)
-{
-	Set_pin_L(GPIOA, SPI1_NSS);
-}
-
-void CS_UnSelect (void)
-{
-	Set_pin_H(GPIOA, SPI1_NSS);
-}
-
-void CE_Enable (void)
-{
-	Set_pin_H(GPIOA, SPI1_CE);
-}
-
-void CE_Disable (void)
-{
-	Set_pin_L(GPIOA, SPI1_CE);
-}
+static std::vector<uint8_t> Buffer_rx_tx{};
 
 uint8_t spi_transmit(uint8_t data)
 {
-while (!(SPI1->SR & SPI_SR_TXE));
-SPI1->DR = data;
-while(SPI1->SR & SPI_SR_BSY) {}
-while(!(SPI1->SR & SPI_SR_RXNE));// Ждём получения данных, читаем их.
-data=SPI1->DR;
-return data;
+
 }
 
 
@@ -59,22 +34,22 @@ void nrf24_WriteReg (uint8_t Reg, uint8_t Data)
 	uint8_t buf[2];
 	buf[0] = Reg | W_REGISTER;
 	buf[1] = Data;
-	CS_Select();
+	
   spi_transmit(buf[0]);
   spi_transmit(buf[1]);
-	CS_UnSelect();
+	
 }
 
 uint8_t nrf24_ReadReg (uint8_t Reg)
 {
   uint8_t data=0;
-	CS_Select();
+	
 	data=spi_transmit(Reg | R_REGISTER);
   if (data!=STATUS)//если адрес равен адрес регистра статус то и возварщаем его состояние
   {
     data=spi_transmit(0xFF);
   }
-	CS_UnSelect();
+	
 	return data;
 }
 
@@ -83,13 +58,13 @@ void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size)
 {
 	uint8_t buf;
 	buf= Reg|W_REGISTER;
-	CS_Select();
+	
 	spi_transmit(buf);
 	for(int i=0;i<size;i++)
 	{
 		spi_transmit(data[i]);
 	}
-	CS_UnSelect();
+	
 }
 
 
@@ -99,7 +74,7 @@ void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size)
 void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size)
 {
 	volatile uint8_t buf[32]={0,};
-	CS_Select();
+	
     data=spi_transmit(Reg | R_REGISTER);
   if (data!=STATUS)//если адрес равен адрес регистра статус то и возварщаем его состояние
   {
@@ -108,7 +83,7 @@ void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size)
 	buf[i]= spi_transmit(0xFF);
 	}
   }
-	CS_UnSelect();
+	
 }*/
 
 
@@ -116,9 +91,9 @@ void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size)
 // send the command to the NRF
 void nrfsendCmd (uint8_t cmd)
 {
-	CS_Select();
+	
 	spi_transmit(cmd);
-	CS_UnSelect();
+	
 }
 
 
@@ -179,7 +154,7 @@ uint8_t nrf24_reset(uint8_t REG)
 
 void NRF24_Init (void)
 {
-	CE_Disable();
+	//CE_Disable();
 	nrf24_reset (0);
 	nrf24_WriteReg(CONFIG, 0);  // will be configured later
 	nrf24_WriteReg(EN_AA, 0);  // No Auto ACK
@@ -188,7 +163,7 @@ void NRF24_Init (void)
 	nrf24_WriteReg (SETUP_RETR, 0);   // No retransmission
 	nrf24_WriteReg (RF_CH, 0);  // will be setup during Tx or RX
 	nrf24_WriteReg (RF_SETUP, 0x0E);   // Power= 0db, data rate = 2Mbps	
-	CE_Enable();
+	//CE_Enable();
 }
 
 
@@ -196,7 +171,7 @@ void NRF24_Init (void)
 
 void NRF24_TxMode (uint8_t *Address, uint8_t channel)
 {
-	CE_Disable();
+	//CE_Disable();
 	nrf24_WriteReg (RF_CH, channel);  // select the channel
 	nrf24_WriteRegMulti(TX_ADDR, Address, 5);  // Write the TX address
 	// power up the device
@@ -204,7 +179,7 @@ void NRF24_TxMode (uint8_t *Address, uint8_t channel)
 //	config = config | (1<<1);   // write 1 in the PWR_UP bit
 	config = config & (0xF2);    // write 0 in the PRIM_RX, and 1 in the PWR_UP, and all other bits are masked
 	nrf24_WriteReg (CONFIG, config);
-	CE_Enable();
+	//CE_Enable();
 }
 
 
@@ -215,7 +190,7 @@ uint8_t NRF24_Transmit (uint8_t *data)
 	uint8_t cmdtosend = 0;
 
 	// select the device
-	CS_Select();
+	
 
 	// payload command
 	cmdtosend = W_TX_PAYLOAD;
@@ -225,7 +200,7 @@ uint8_t NRF24_Transmit (uint8_t *data)
 	HAL_SPI_Transmit(NRF24_SPI, data, 32, 1000);
 
 	// Unselect the device
-	CS_UnSelect();
+	
 
 	HAL_Delay(1);
 
@@ -250,7 +225,7 @@ uint8_t NRF24_Transmit (uint8_t *data)
 void NRF24_RxMode (uint8_t *Address, uint8_t channel)
 {
 	// disable the chip before configuring the device
-	CE_Disable();
+	//CE_Disable();
 
 	nrf24_reset (STATUS);
 
@@ -283,7 +258,7 @@ void NRF24_RxMode (uint8_t *Address, uint8_t channel)
 	nrf24_WriteReg (CONFIG, config);
 
 	// Enable the chip after configuring the device
-	CE_Enable();
+	//CE_Enable();
 }
 
 
@@ -303,14 +278,14 @@ void NRF24_Receive (uint8_t *data)
 {
 	uint8_t cmdtosend = 0;
 	// select the device
-	CS_Select();
+	
 	// payload command
 	cmdtosend = R_RX_PAYLOAD;
 	HAL_SPI_Transmit(NRF24_SPI, &cmdtosend, 1, 100);
 	// Receive the payload
 	HAL_SPI_Receive(NRF24_SPI, data, 32, 1000);
 	// Unselect the device
-	CS_UnSelect();
+	
 	HAL_Delay(1);
 	cmdtosend = FLUSH_RX;
 	nrfsendCmd(cmdtosend);
