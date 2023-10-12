@@ -90,8 +90,8 @@ void NRF24_Init (void);
 void NRF24_TxMode (uint8_t *Address, uint8_t channel);
 void NRF24_RxMode (uint8_t *Address, uint8_t channel);
 uint8_t isDataAvailable (int pipenum);
-
-
+void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t size);
+void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value);
 
 
 /* Memory Map */

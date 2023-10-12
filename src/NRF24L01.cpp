@@ -21,7 +21,52 @@
 #include "NRF24L01.hpp"
 #include <stm32f1xx.h>
 
-static std::vector<uint8_t> Buffer_rx_tx{};
+
+ static std::array<uint8_t,5> data;
+ uint8_t *ptr;
+
+
+
+
+
+void spi_init()
+{
+	
+}
+
+
+void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t size)
+{
+  std::vector<uint8_t> Buffer_rx;
+ Buffer_rx.resize(size+1);
+ Buffer_rx.at(0)=reg|R_REGISTER;
+ spi_nrf24L01.Recieve(Buffer_rx);
+ ptr= reinterpret_cast<uint8_t*>(data.data());
+ volatile uint8_t size2=Buffer_rx.size();
+ for (uint8_t i=0;i<size+1;i++)
+ {
+  data.at(i)=Buffer_rx.at(i);
+ }
+ Buffer_rx.at(0)=0;
+}
+//******************************************************************//
+void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value)
+{
+ static std::vector<uint8_t> Buffer_tx;
+ Buffer_tx.clear();
+ Buffer_tx.resize(2);
+ Buffer_tx.at(0)=reg|W_REGISTER;
+ Buffer_tx.at(1)=value;
+ spi_nrf24L01.Transmitt(Buffer_tx);
+}
+//******************************************************************//
+
+
+
+
+
+
+
 
 uint8_t spi_transmit(uint8_t data)
 {
@@ -74,7 +119,6 @@ void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size)
 void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size)
 {
 	volatile uint8_t buf[32]={0,};
-	
     data=spi_transmit(Reg | R_REGISTER);
   if (data!=STATUS)//если адрес равен адрес регистра статус то и возварщаем его состояние
   {
@@ -83,7 +127,6 @@ void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size)
 	buf[i]= spi_transmit(0xFF);
 	}
   }
-	
 }*/
 
 
