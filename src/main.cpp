@@ -88,8 +88,8 @@ spi_nrf24L01.SettingsSPI(
             RegDMACR::TXDMA_DIS,
             RegDMACR::RXDMA_DIS);
 
-
-nrf24_Write_Reg(spi_nrf24L01,CONFIG,0x08);
+uint8_t data[32]={0xC2, 0xC3, 0xC4, 0xC5, 0xC6};
+//nrf24_Write_Reg(spi_nrf24L01,RX_ADDR_P0,data,5);
 nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P0,5);
 uint16_t k=0;
 k++;

@@ -22,7 +22,7 @@
 #include <stm32f1xx.h>
 
 
- static std::array<uint8_t,5> data;
+ static std::array<uint8_t,32> data;
  uint8_t *ptr;
 
 
@@ -43,21 +43,24 @@ void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t size)
  spi_nrf24L01.Recieve(Buffer_rx);
  ptr= reinterpret_cast<uint8_t*>(data.data());
  volatile uint8_t size2=Buffer_rx.size();
- for (uint8_t i=0;i<size+1;i++)
+ for (uint8_t i=0;i<size2;i++)
  {
   data.at(i)=Buffer_rx.at(i);
  }
  Buffer_rx.at(0)=0;
 }
 //******************************************************************//
-void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value)
+void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t *value,uint8_t size)
 {
  static std::vector<uint8_t> Buffer_tx;
  Buffer_tx.clear();
- Buffer_tx.resize(2);
- Buffer_tx.at(0)=reg|W_REGISTER;
- Buffer_tx.at(1)=value;
- spi_nrf24L01.Transmitt(Buffer_tx);
+ Buffer_tx.resize(size);
+  Buffer_tx.at(0)=reg|W_REGISTER;
+  for(int i=1;i<size;i++)
+  {
+   Buffer_tx.at(i)=value[i];
+  }
+spi_nrf24L01.Transmitt(Buffer_tx);
 }
 //******************************************************************//
 
