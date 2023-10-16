@@ -44,9 +44,8 @@ void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value)
  static std::vector<uint8_t> Buffer_tx;
  Buffer_tx.clear();
  Buffer_tx.resize(2);
- Buffer_tx.reserve(1);
- Buffer_tx.insert(Buffer_tx.begin(),reg|W_REGISTER);
- Buffer_tx.insert(Buffer_tx.begin()+1,value);
+ Buffer_tx.at(0)=reg|W_REGISTER;
+ Buffer_tx.at(1)=value;
  spi_nrf24L01.Transmitt(Buffer_tx);
 }
 //******************************************************************//
@@ -62,7 +61,7 @@ uint8_t spi_transmit(uint8_t data)
 {
 
 }
-
+//******************************************************************//
 void nrf24_Write_Reg (uint8_t Reg, uint8_t Data)
 {
 	uint8_t buf[2];
@@ -82,25 +81,6 @@ uint8_t nrf24_ReadReg (uint8_t Reg)
   }
   return data;
 }
-
-
-
-/* Read multiple bytes from the register */
-/*
-void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size)
-{
-	volatile uint8_t buf[32]={0,};
-    data=spi_transmit(Reg | R_REGISTER);
-  if (data!=STATUS)//если адрес равен адрес регистра статус то и возварщаем его состояние
-  {
-	for(int i=0;i<size;i++)
-	{
-	buf[i]= spi_transmit(0xFF);
-	}
-  }
-}*/
-
-
 
 // send the command to the NRF
 void nrfsendCmd (uint8_t cmd)
@@ -129,7 +109,6 @@ uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG)
 	{
 		return 0;
 	}
-	
 	nrf24_Write_Reg(spi_nrf24L01,EN_AA, 0x3F);
 	nrf24_Write_Reg(spi_nrf24L01,EN_RXADDR, 0x03);
 	nrf24_Write_Reg(spi_nrf24L01,SETUP_AW, 0x03);
@@ -139,16 +118,13 @@ uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG)
 	nrf24_Write_Reg(spi_nrf24L01,STATUS, 0x00);
 	nrf24_Write_Reg(spi_nrf24L01,OBSERVE_TX, 0x00);
 	nrf24_Write_Reg(spi_nrf24L01,CD, 0x00);
-	//uint8_t rx_addr_p0_def[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
-	//nrf24_Write_RegMulti(RX_ADDR_P0, rx_addr_p0_def, 5);
-	//uint8_t rx_addr_p1_def[5] = {0xC2, 0xC2, 0xC2, 0xC2, 0xC2};
-	//nrf24_Write_RegMulti(RX_ADDR_P1, rx_addr_p1_def, 5);
+	nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P0, std::vector<uint8_t>{0xE7, 0xE7, 0xE7, 0xE7, 0xE7});
+	nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P1, std::vector<uint8_t>{0xC2, 0xC2, 0xC2, 0xC2, 0xC2});
 	nrf24_Write_Reg(spi_nrf24L01,RX_ADDR_P2, 0xC3);
 	nrf24_Write_Reg(spi_nrf24L01,RX_ADDR_P3, 0xC4);
 	nrf24_Write_Reg(spi_nrf24L01,RX_ADDR_P4, 0xC5);
 	nrf24_Write_Reg(spi_nrf24L01,RX_ADDR_P5, 0xC6);
-	//uint8_t tx_addr_def[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
-	//nrf24_Write_RegMulti(TX_ADDR, tx_addr_def, 5);
+	nrf24_Write_Reg_multi(spi_nrf24L01,TX_ADDR, std::vector<uint8_t>{0xE7, 0xE7, 0xE7, 0xE7, 0xE7});
 	nrf24_Write_Reg(spi_nrf24L01,RX_PW_P0, 0);
 	nrf24_Write_Reg(spi_nrf24L01,RX_PW_P1, 0);
 	nrf24_Write_Reg(spi_nrf24L01,RX_PW_P2, 0);
@@ -160,9 +136,6 @@ uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG)
 	nrf24_Write_Reg(spi_nrf24L01,FEATURE, 0);
 	}
 }
-
-
-
 
 void NRF24_Init (SPI& spi_nrf24L01)
 {
