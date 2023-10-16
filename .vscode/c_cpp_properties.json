@@ -1,0 +1,49 @@
+//
+// !!! WARNING !!! AUTO-GENERATED FILE!
+// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
+// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
+//
+{
+    "configurations": [
+        {
+            "name": "PlatformIO",
+            "includePath": [
+                "C:/Users/a.vasilchenko/Documents/PlatformIO/Projects/stm32_tft/include",
+                "C:/Users/a.vasilchenko/Documents/PlatformIO/Projects/stm32_tft/src",
+                "C:/Users/a.vasilchenko/Documents/PlatformIO/Projects/stm32_tft/lib/Drivers",
+                "C:/Users/a.vasilchenko/.platformio/packages/framework-cmsis@2.50501.200527/CMSIS/Include",
+                "C:/Users/a.vasilchenko/.platformio/packages/framework-cmsis-stm32f1/Include",
+                "C:/Users/a.vasilchenko/Documents/PlatformIO/Projects/stm32_tft/.pio/libdeps/genericSTM32F103C8/Unity/src",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "C:/Users/a.vasilchenko/Documents/PlatformIO/Projects/stm32_tft/include",
+                    "C:/Users/a.vasilchenko/Documents/PlatformIO/Projects/stm32_tft/src",
+                    "C:/Users/a.vasilchenko/Documents/PlatformIO/Projects/stm32_tft/lib/Drivers",
+                    "C:/Users/a.vasilchenko/.platformio/packages/framework-cmsis@2.50501.200527/CMSIS/Include",
+                    "C:/Users/a.vasilchenko/.platformio/packages/framework-cmsis-stm32f1/Include",
+                    "C:/Users/a.vasilchenko/Documents/PlatformIO/Projects/stm32_tft/.pio/libdeps/genericSTM32F103C8/Unity/src",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=60111",
+                "STM32F103xB",
+                "STM32F1",
+                "F_CPU=72000000L",
+                "__PLATFORMIO_BUILD_DEBUG__",
+                ""
+            ],
+            "compilerPath": "C:/Users/a.vasilchenko/.platformio/packages/toolchain-gccarmnoneeabi@1.70201.0/bin/arm-none-eabi-gcc.exe",
+            "compilerArgs": [
+                "-mfloat-abi=soft",
+                "-mthumb",
+                "-mcpu=cortex-m3",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}
