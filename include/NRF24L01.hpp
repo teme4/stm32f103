@@ -85,14 +85,15 @@ uint8_t nrf24_ReadReg (uint8_t Reg);
 void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size);
 void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size);
 void nrfsendCmd (uint8_t cmd);
-uint8_t nrf24_reset(uint8_t REG);
-void NRF24_Init (void);
+void NRF24_Init (SPI& spi_nrf24L01);
 void NRF24_TxMode (uint8_t *Address, uint8_t channel);
 void NRF24_RxMode (uint8_t *Address, uint8_t channel);
 uint8_t isDataAvailable (int pipenum);
-void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t size);
-void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t *value,uint8_t size);
-
+//void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t size);
+void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value);
+void nrf24_Write_Reg_multi(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_tx);
+void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx);
+uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG);
 
 /* Memory Map */
 #define CONFIG      0x00
