@@ -19,14 +19,15 @@
 */
 
 //NRF pins
+
 //1 - +3.3V
 //2 - GNG
-//3 - CE
-//4 - CS
-//5 - SCK
-//6 - MOSI
-//7 - MISO
-//8 - IRQ
+//3 - CE      A4
+//4 - CS      A3
+//5 - SCK     A5
+//6 - MOSI    A7
+//7 - MISO    A6
+//8 - IRQ     A
 
 #ifndef INC_NRF24L01_H_
 #define INC_NRF24L01_H_
@@ -38,7 +39,6 @@
 #include <Time&Sync/drivers.hpp>
 
 void nrf24_WriteReg (uint8_t Reg, uint8_t Data);
-//uint8_t nrf24_ReadReg (uint8_t Reg);
 void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size);
 void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size);
 void nrfsendCmd (uint8_t cmd);
@@ -46,7 +46,6 @@ void NRF24_Init (SPI& spi_nrf24L01);
 void NRF24_TxMode (uint8_t *Address, uint8_t channel);
 void NRF24_RxMode (uint8_t *Address, uint8_t channel);
 uint8_t isDataAvailable (int pipenum);
-//void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t size);
 void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value);
 void nrf24_Write_Reg_multi(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_tx);
 void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx);

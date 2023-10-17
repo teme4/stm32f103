@@ -3,6 +3,7 @@
 #include "tim_Delay.hpp"
 
 #include <DigitalInterface/drivers.hpp>
+#include <PortDriver/pin.hpp>
 #include <Time&Sync/drivers.hpp>
 
 /*
@@ -59,11 +60,16 @@ void nrf24_Write_Reg(uint8_t reg,uint8_t value)
 int main(void)
 {
 
+
 PINx pin_mco(GPIOA,8);
 UARTLines uart_log{   USART1,2000000,
                       PINx(GPIOA,9),
                       PINx(GPIOA,10)};
  ClockSystem clock(pin_mco, uart_log);
+
+	PINx CE_pin(GPIOA,4);
+    CE_pin.Settings(TYPE::OUTPUT_GPO_Push_Pull,LVL::LOW);
+
 
  PINx spi_nrf24_mosi(GPIOA,7);
  PINx spi_nrf24_miso(GPIOA,6);
@@ -92,7 +98,7 @@ spi_nrf24L01.SettingsSPI(
 NRF24_Init(spi_nrf24L01);
 
 /*
-nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P0, std::vector<uint8_t>{0xE7, 0xE7, 0xE7, 0xE7, 0xE7});
+nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P0, std::vector<uint8_t>{0xE1, 0xE1, 0xE1, 0xE1, 0xE1});
 nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P0,std::vector<uint8_t>(5,0));
 */
 uint16_t k=0;
@@ -101,5 +107,8 @@ k++;
  while(1)
  {
 
+/*
+CE_pin.SetPinLevel(LVL::HIGH);
+CE_pin.SetPinLevel(LVL::LOW);*/
  }
  }

@@ -9,5 +9,4 @@
 #include "spi/spi.hpp"
 #include "dma/dma.hpp"
 
-
 #endif//__DIGITAL_INTERFACE_API_HPP__
