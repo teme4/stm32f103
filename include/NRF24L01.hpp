@@ -38,18 +38,23 @@
 #include <DigitalInterface/drivers.hpp>
 #include <Time&Sync/drivers.hpp>
 
-void nrf24_WriteReg (uint8_t Reg, uint8_t Data);
-void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size);
-void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size);
-void nrfsendCmd (uint8_t cmd);
+//void nrf24_WriteReg (uint8_t Reg, uint8_t Data);
+//void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size);
+//void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size);
+void nrfsendCmd (SPI& spi_nrf24L01,std::vector<uint8_t> Buffer_tx);
 void NRF24_Init (SPI& spi_nrf24L01);
-void NRF24_TxMode (uint8_t *Address, uint8_t channel);
-void NRF24_RxMode (uint8_t *Address, uint8_t channel);
-uint8_t isDataAvailable (int pipenum);
+
+void NRF24_TxMode (SPI& spi_nrf24L01,std::vector<uint8_t> Address, uint8_t channel);
+void NRF24_RxMode (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t channel);
+
+uint8_t isDataAvailable (SPI& spi_nrf24L01,int pipenum);
 void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value);
 void nrf24_Write_Reg_multi(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_tx);
 void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx);
 uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG);
+void NRF24_Receive (SPI& spi_nrf24L01,std::vector<uint8_t> data);
+uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data);
+
 
 /* Memory Map */
 #define CONFIG      0x00

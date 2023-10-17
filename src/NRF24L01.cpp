@@ -24,6 +24,8 @@
  static std::array<uint8_t,32> data;
  uint8_t *ptr;
  extern PINx CE_pin(GPIOA,4);
+ extern PINx led_pin(GPIOA,4);
+
 //******************************************************************//
 void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx)
 {
@@ -57,9 +59,9 @@ void nrf24_Write_Reg_multi(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Bu
 }
 //******************************************************************//
 // send the command to the NRF
-void nrfsendCmd (uint8_t cmd)
+void nrfsendCmd (SPI& spi_nrf24L01,std::vector<uint8_t> Buffer_tx)
 {
-	//spi_transmit(cmd);
+	spi_nrf24L01.Transmitt(Buffer_tx);
 }
 //******************************************************************//
 uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG)
@@ -142,43 +144,38 @@ void NRF24_TxMode (SPI& spi_nrf24L01,std::vector<uint8_t> Address, uint8_t chann
 	CE_pin.SetPinLevel(LVL::HIGH);
 }
 
-
 // transmit the data
-/*
+
 uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data)
 {
-	uint8_t cmdtosend = 0;
-	// select the device
-	// payload command
-	cmdtosend = W_TX_PAYLOAD;
-	HAL_SPI_Transmit(NRF24_SPI, &cmdtosend, 1, 100);
-	// send the payload
-	HAL_SPI_Transmit(NRF24_SPI, data, 32, 1000);
-	// Unselect the device
-
+    nrf24_Write_Reg_multi(spi_nrf24L01,W_TX_PAYLOAD, data);
 	//HAL_Delay(1);
 	//uint8_t fifostatus = nrf24_ReadReg(FIFO_STATUS);
-       	nrf24_Read_Reg(spi_nrf24L01,FIFO_STATUS,std::vector<uint8_t>(1,0));
+    nrf24_Read_Reg(spi_nrf24L01,FIFO_STATUS,std::vector<uint8_t>(1,0));
 	uint8_t fifostatus =data.at(1);
 	// check the fourth bit of FIFO_STATUS to know if the TX fifo is empty
 	if ((fifostatus&(1<<4)) && (!(fifostatus&(1<<3))))
 	{
-		cmdtosend = FLUSH_TX;
-		nrfsendCmd(cmdtosend);
+		//cmdtosend = FLUSH_TX;
+		static std::vector<uint8_t> Buffer_tx;
+		Buffer_tx.reserve(1);
+ 		Buffer_tx.insert(Buffer_tx.begin(),FLUSH_TX);
+		nrfsendCmd(spi_nrf24L01,Buffer_tx);
 		// reset FIFO_STATUS
 		nrf24_reset (spi_nrf24L01,FIFO_STATUS);
 		return 1;
 	}
 	return 0;
-}*/
+}
 
 
-void NRF24_RxMode (SPI& spi_nrf24L01,uint8_t *Address, uint8_t channel)
+void NRF24_RxMode (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t channel)
 {
 	// disable the chip before configuring the device
 	CE_pin.SetPinLevel(LVL::LOW);
 	nrf24_reset (spi_nrf24L01,STATUS);
 	nrf24_Write_Reg (spi_nrf24L01,RF_CH, channel);  // select the channel
+
 	// select data pipe 2
 	//unt8_t en_rxaddr = nrf24_ReadReg(EN_RXADDR);
 	nrf24_Read_Reg(spi_nrf24L01,EN_RXADDR,std::vector<uint8_t>(1,0));
@@ -196,6 +193,7 @@ void NRF24_RxMode (SPI& spi_nrf24L01,uint8_t *Address, uint8_t channel)
 	 *
 	 */
 	//nrf24_Write_Reg_multi(RX_ADDR_P1, Address, 5);  // Write the Pipe1 address
+	nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P1,Address);
 	nrf24_Write_Reg(spi_nrf24L01,RX_ADDR_P2, 0xEE);  // Write the Pipe2 LSB address
 	nrf24_Write_Reg (spi_nrf24L01,RX_PW_P2, 32);   // 32 bit payload size for pipe 2
 
@@ -213,7 +211,6 @@ void NRF24_RxMode (SPI& spi_nrf24L01,uint8_t *Address, uint8_t channel)
 
 uint8_t isDataAvailable (SPI& spi_nrf24L01,int pipenum)
 {
-	//uint8_t status = nrf24_ReadReg(STATUS);
 	nrf24_Read_Reg(spi_nrf24L01,STATUS,std::vector<uint8_t>(1,0));
 	uint8_t status =data.at(1);
 	if ((status&(1<<6))&&(status&(pipenum<<1)))
@@ -227,46 +224,20 @@ uint8_t isDataAvailable (SPI& spi_nrf24L01,int pipenum)
 
 void NRF24_Receive (SPI& spi_nrf24L01,std::vector<uint8_t> data)
 {
-	uint8_t cmdtosend = 0;
+	//uint8_t cmdtosend = 0;
 	// select the device
 	// payload command
-	cmdtosend = R_RX_PAYLOAD;
+	//cmdtosend = R_RX_PAYLOAD;
 	//HAL_SPI_Transmit(spi_nrf24L01, cmdtosend);
 	// Receive the payload
 	//HAL_SPI_Receive(NRF24_SPI, data, 32, 1000);
 		// Unselect the device
-	nrf24_Read_Reg(spi_nrf24L01,cmdtosend,data);
-	//HAL_Delay(1);
-	
-	cmdtosend = FLUSH_RX;
-	nrfsendCmd(cmdtosend);
+	nrf24_Read_Reg(spi_nrf24L01,R_RX_PAYLOAD,data);
+	//HAL_Delay(1);    for(int i=1;i<999999;i++)
+    for(int i=1;i<999999;i++)
+    {
+      int k=i+5-3;
+    }
+	//cmdtosend = FLUSH_RX;
+	nrfsendCmd(spi_nrf24L01,std::vector<uint8_t>{FLUSH_RX});
 }
-
-
-
-// Read all the Register data
-/*
-void NRF24_ReadAll (uint8_t *data)
-{
-	for (int i=0; i<10; i++)
-	{
-		*(data+i) = nrf24_ReadReg(i);
-	}
-
-	nrf24_ReadReg_Multi(RX_ADDR_P0, (data+10), 5);
-
-	nrf24_ReadReg_Multi(RX_ADDR_P1, (data+15), 5);
-
-	*(data+20) = nrf24_ReadReg(RX_ADDR_P2);
-	*(data+21) = nrf24_ReadReg(RX_ADDR_P3);
-	*(data+22) = nrf24_ReadReg(RX_ADDR_P4);
-	*(data+23) = nrf24_ReadReg(RX_ADDR_P5);
-
-	nrf24_ReadReg_Multi(RX_ADDR_P0, (data+24), 5);
-
-	for (int i=29; i<38; i++)
-	{
-		*(data+i) = nrf24_ReadReg(i-12);
-	}
-
-}*/
