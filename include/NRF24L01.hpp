@@ -37,51 +37,8 @@
 #include <DigitalInterface/drivers.hpp>
 #include <Time&Sync/drivers.hpp>
 
-/*
- std::array<uint8_t,5> data;
- static std::vector<uint8_t> Buffer_rx_tx{};
-
-
-PINx pin_mco(GPIOA,8);
-UARTLines uart_log{   USART1,2000000,
-                      PINx(GPIOA,9),
-                      PINx(GPIOA,10)};
-ClockSystem clock(pin_mco, uart_log);
-
-PINx spi_nrf24_mosi(GPIOA,7);
-PINx spi_nrf24_miso(GPIOA,6);
-PINx spi_nrf24_sck(GPIOA,5);
-PINx spi_nrf24_cs(GPIOA,3);
-
-SPILines nrf{ .SPIx=SPI1,
-              .MOSI=spi_nrf24_mosi,
-              .MISO=spi_nrf24_miso,
-              .SCLK=spi_nrf24_sck,
-              .NSS=spi_nrf24_cs,
-              };
-SPI spi_nrf24L01(nrf);
-
-spi_nrf24L01.SettingsSPI(
-            RegCR1::ACTIVE,
-            RegCR1::MASTER,
-            2,
-            RegCR1::SPI_MODE0,
-            RegCR1::DFF8bit,
-            RegCR1::MSBF,
-            {},
-            RegDMACR::TXDMA_DIS,
-            RegDMACR::RXDMA_DIS);
-
-UART debug(USART1,
-                     115200,
-                      std::make_unique<PINx>(GPIOA,9),
-                      std::make_unique<PINx>(GPIOA,10));
-
-
-*/
-
 void nrf24_WriteReg (uint8_t Reg, uint8_t Data);
-uint8_t nrf24_ReadReg (uint8_t Reg);
+//uint8_t nrf24_ReadReg (uint8_t Reg);
 void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size);
 void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size);
 void nrfsendCmd (uint8_t cmd);

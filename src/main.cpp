@@ -91,10 +91,10 @@ spi_nrf24L01.SettingsSPI(
 
 NRF24_Init(spi_nrf24L01);
 
-
+/*
 nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P0, std::vector<uint8_t>{0xE7, 0xE7, 0xE7, 0xE7, 0xE7});
 nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P0,std::vector<uint8_t>(5,0));
-
+*/
 uint16_t k=0;
 k++;
 

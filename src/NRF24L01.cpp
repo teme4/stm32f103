@@ -23,7 +23,7 @@
 
  static std::array<uint8_t,32> data;
  uint8_t *ptr;
-
+//******************************************************************//
 void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx)
 {
  Buffer_rx.reserve(1);
@@ -36,8 +36,7 @@ volatile uint8_t size2=Buffer_rx.size();
  {
    data.at(i)=Buffer_rx.at(i);
  }
- //Buffer_rx.clear();
-}
+ }
 //******************************************************************//
 void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value)
 {
@@ -56,39 +55,12 @@ void nrf24_Write_Reg_multi(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Bu
  spi_nrf24L01.Transmitt(Buffer_tx);
 }
 //******************************************************************//
-
-uint8_t spi_transmit(uint8_t data)
-{
-
-}
-//******************************************************************//
-void nrf24_Write_Reg (uint8_t Reg, uint8_t Data)
-{
-	uint8_t buf[2];
-	buf[0] = Reg | W_REGISTER;
-	buf[1] = Data;
-  spi_transmit(buf[0]);
-  spi_transmit(buf[1]);
-}
-
-uint8_t nrf24_ReadReg (uint8_t Reg)
-{
-  uint8_t data=0;
-  data=spi_transmit(Reg | R_REGISTER);
-  if (data!=STATUS)//если адрес равен адрес регистра статус то и возварщаем его состояние
-  {
-    data=spi_transmit(0xFF);
-  }
-  return data;
-}
-
 // send the command to the NRF
 void nrfsendCmd (uint8_t cmd)
 {
-	spi_transmit(cmd);
+	//spi_transmit(cmd);
 }
-
-
+//******************************************************************//
 uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG)
 {
 	volatile uint8_t check=0;
@@ -104,7 +76,9 @@ uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG)
 
 	else {
 	nrf24_Write_Reg(spi_nrf24L01,CONFIG, 0x08);
-	check=nrf24_ReadReg(CONFIG);
+	//check=nrf24_ReadReg(CONFIG);
+	nrf24_Read_Reg(spi_nrf24L01,CONFIG,std::vector<uint8_t>(1,0));
+	check=data.at(1);
 	if(check!=0x08)
 	{
 		return 0;
@@ -154,16 +128,21 @@ void NRF24_Init (SPI& spi_nrf24L01)
 
 // set up the Tx mode
 
-void NRF24_TxMode (uint8_t *Address, uint8_t channel)
+void NRF24_TxMode (SPI& spi_nrf24L01,std::vector<uint8_t> Address, uint8_t channel)
 {
 	//CE_Disable();
-	nrf24_Write_Reg (RF_CH, channel);  // select the channel
+	nrf24_Write_Reg (spi_nrf24L01,RF_CH, channel);  // select the channel
 	//nrf24_Write_Reg_multi(TX_ADDR, Address, 5);  // Write the TX address
+	nrf24_Write_Reg_multi(spi_nrf24L01,TX_ADDR,Address);
 	// power up the device
-	uint8_t config = nrf24_ReadReg(CONFIG);
+	nrf24_Read_Reg(spi_nrf24L01,CONFIG,std::vector<uint8_t>(1,0));
+	uint8_t  config=data.at(1);
+	//uint8_t config = nrf24_ReadReg(CONFIG);
+	
+
 //	config = config | (1<<1);   // write 1 in the PWR_UP bit
 	config = config & (0xF2);    // write 0 in the PRIM_RX, and 1 in the PWR_UP, and all other bits are masked
-	nrf24_Write_Reg (CONFIG, config);
+	nrf24_Write_Reg (spi_nrf24L01,CONFIG, config);
 	//CE_Enable();
 }
 
@@ -207,20 +186,19 @@ uint8_t NRF24_Transmit (uint8_t *data)
 }*/
 
 
-void NRF24_RxMode (uint8_t *Address, uint8_t channel)
+void NRF24_RxMode (SPI& spi_nrf24L01,uint8_t *Address, uint8_t channel)
 {
 	// disable the chip before configuring the device
 	//CE_Disable();
 
-	//nrf24_reset (STATUS);
-
-	nrf24_Write_Reg (RF_CH, channel);  // select the channel
-
+	nrf24_reset (spi_nrf24L01,STATUS);
+	nrf24_Write_Reg (spi_nrf24L01,RF_CH, channel);  // select the channel
 	// select data pipe 2
-	uint8_t en_rxaddr = nrf24_ReadReg(EN_RXADDR);
+	//unt8_t en_rxaddr = nrf24_ReadReg(EN_RXADDR);
+	nrf24_Read_Reg(spi_nrf24L01,EN_RXADDR,std::vector<uint8_t>(1,0));
+	uint8_t en_rxaddr =data.at(1);
 	en_rxaddr = en_rxaddr | (1<<2);
-	nrf24_Write_Reg (EN_RXADDR, en_rxaddr);
-
+	nrf24_Write_Reg (spi_nrf24L01,EN_RXADDR, en_rxaddr);
 	/* We must write the address for Data Pipe 1, if we want to use any pipe from 2 to 5
 	 * The Address from DATA Pipe 2 to Data Pipe 5 differs only in the LSB
 	 * Their 4 MSB Bytes will still be same as Data Pipe 1
@@ -232,48 +210,53 @@ void NRF24_RxMode (uint8_t *Address, uint8_t channel)
 	 *
 	 */
 	//nrf24_Write_Reg_multi(RX_ADDR_P1, Address, 5);  // Write the Pipe1 address
-	nrf24_Write_Reg(RX_ADDR_P2, 0xEE);  // Write the Pipe2 LSB address
+	nrf24_Write_Reg(spi_nrf24L01,RX_ADDR_P2, 0xEE);  // Write the Pipe2 LSB address
 
-	nrf24_Write_Reg (RX_PW_P2, 32);   // 32 bit payload size for pipe 2
+	nrf24_Write_Reg (spi_nrf24L01,RX_PW_P2, 32);   // 32 bit payload size for pipe 2
 
 
 	// power up the device in Rx mode
-	uint8_t config = nrf24_ReadReg(CONFIG);
+	nrf24_Read_Reg(spi_nrf24L01,CONFIG,std::vector<uint8_t>(1,0));
+	uint8_t config =data.at(1);
+	//uint8_t config = nrf24_ReadReg(CONFIG);
+
 	config = config | (1<<1) | (1<<0);
-	nrf24_Write_Reg (CONFIG, config);
+	nrf24_Write_Reg (spi_nrf24L01,CONFIG, config);
 
 	// Enable the chip after configuring the device
 	//CE_Enable();
 }
 
-uint8_t isDataAvailable (int pipenum)
+uint8_t isDataAvailable (SPI& spi_nrf24L01,int pipenum)
 {
-	uint8_t status = nrf24_ReadReg(STATUS);
+	//uint8_t status = nrf24_ReadReg(STATUS);
+	nrf24_Read_Reg(spi_nrf24L01,STATUS,std::vector<uint8_t>(1,0));
+	uint8_t status =data.at(1);
 	if ((status&(1<<6))&&(status&(pipenum<<1)))
 	{
-		nrf24_Write_Reg(STATUS, (1<<6));
+		nrf24_Write_Reg(spi_nrf24L01,STATUS, (1<<6));
 		return 1;
 	}
 	return 0;
 }
 
-/*
-void NRF24_Receive (uint8_t *data)
+
+void NRF24_Receive (SPI& spi_nrf24L01,std::vector<uint8_t> data)
 {
 	uint8_t cmdtosend = 0;
 	// select the device
-	
 	// payload command
 	cmdtosend = R_RX_PAYLOAD;
-	HAL_SPI_Transmit(NRF24_SPI, &cmdtosend, 1, 100);
+	//HAL_SPI_Transmit(spi_nrf24L01, cmdtosend);
 	// Receive the payload
-	HAL_SPI_Receive(NRF24_SPI, data, 32, 1000);
-	// Unselect the device
+	//HAL_SPI_Receive(NRF24_SPI, data, 32, 1000);
+		// Unselect the device
+	nrf24_Read_Reg(spi_nrf24L01,cmdtosend,data);
+	//HAL_Delay(1);
 	
-	HAL_Delay(1);
 	cmdtosend = FLUSH_RX;
 	nrfsendCmd(cmdtosend);
-}*/
+}
 
 
 
