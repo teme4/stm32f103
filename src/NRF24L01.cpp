@@ -31,7 +31,7 @@ void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx
 {
  Buffer_rx.reserve(1);
  Buffer_rx.insert(Buffer_rx.begin(),reg|R_REGISTER);
-volatile uint8_t size2=Buffer_rx.size();
+ volatile uint8_t size2=Buffer_rx.size();
  spi_nrf24L01.Recieve(Buffer_rx);
  ptr= reinterpret_cast<uint8_t*>(data.data());
  size2=Buffer_rx.size();
@@ -87,7 +87,7 @@ uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG)
 		return 0;
 	}
 	nrf24_Write_Reg(spi_nrf24L01,EN_AA, 0x3F);
-	nrf24_Write_Reg(spi_nrf24L01,EN_RXADDR, 0x03);
+	nrf24_Write_Reg(spi_nrf24L01,EN_RXADDR, 0x02);
 	nrf24_Write_Reg(spi_nrf24L01,SETUP_AW, 0x03);
 	nrf24_Write_Reg(spi_nrf24L01,SETUP_RETR, 0x03);
 	nrf24_Write_Reg(spi_nrf24L01,RF_CH, 0x02);
@@ -149,8 +149,11 @@ void NRF24_TxMode (SPI& spi_nrf24L01,std::vector<uint8_t> Address, uint8_t chann
 uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data)
 {
     nrf24_Write_Reg_multi(spi_nrf24L01,W_TX_PAYLOAD, data);
-	//HAL_Delay(1);
 	//uint8_t fifostatus = nrf24_ReadReg(FIFO_STATUS);
+	 for(int i=1;i<9999999;i++) //HAL_Delay(1);
+    {
+      int k=i+5-3;
+    }
     nrf24_Read_Reg(spi_nrf24L01,FIFO_STATUS,std::vector<uint8_t>(1,0));
 	uint8_t fifostatus =data.at(1);
 	// check the fourth bit of FIFO_STATUS to know if the TX fifo is empty
@@ -168,7 +171,6 @@ uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data)
 	return 0;
 }
 
-
 void NRF24_RxMode (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t channel)
 {
 	// disable the chip before configuring the device
@@ -180,8 +182,8 @@ void NRF24_RxMode (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t chan
 	//unt8_t en_rxaddr = nrf24_ReadReg(EN_RXADDR);
 	nrf24_Read_Reg(spi_nrf24L01,EN_RXADDR,std::vector<uint8_t>(1,0));
 	uint8_t en_rxaddr =data.at(1);
-	en_rxaddr = en_rxaddr | (1<<2);
-	nrf24_Write_Reg (spi_nrf24L01,EN_RXADDR, en_rxaddr);
+	//en_rxaddr = en_rxaddr | (1<<2);
+	//nrf24_Write_Reg (spi_nrf24L01,EN_RXADDR, en_rxaddr);
 	/* We must write the address for Data Pipe 1, if we want to use any pipe from 2 to 5
 	 * The Address from DATA Pipe 2 to Data Pipe 5 differs only in the LSB
 	 * Their 4 MSB Bytes will still be same as Data Pipe 1
@@ -212,7 +214,7 @@ void NRF24_RxMode (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t chan
 uint8_t isDataAvailable (SPI& spi_nrf24L01,int pipenum)
 {
 	nrf24_Read_Reg(spi_nrf24L01,STATUS,std::vector<uint8_t>(1,0));
-	uint8_t status =data.at(1);
+	volatile uint8_t status =data.at(1);
 	if ((status&(1<<6))&&(status&(pipenum<<1)))
 	{
 		nrf24_Write_Reg(spi_nrf24L01,STATUS, (1<<6));
@@ -224,15 +226,16 @@ uint8_t isDataAvailable (SPI& spi_nrf24L01,int pipenum)
 
 void NRF24_Receive (SPI& spi_nrf24L01,std::vector<uint8_t> data)
 {
-	//uint8_t cmdtosend = 0;
+	uint8_t result = 0;
 	// select the device
 	// payload command
 	//cmdtosend = R_RX_PAYLOAD;
 	//HAL_SPI_Transmit(spi_nrf24L01, cmdtosend);
 	// Receive the payload
 	//HAL_SPI_Receive(NRF24_SPI, data, 32, 1000);
-		// Unselect the device
-	nrf24_Read_Reg(spi_nrf24L01,R_RX_PAYLOAD,data);
+	// Unselect the device
+	nrf24_Read_Reg(spi_nrf24L01,R_RX_PAYLOAD,std::vector<uint8_t>(3,0));
+    result=data.at(1);
 	//HAL_Delay(1);    for(int i=1;i<999999;i++)
     for(int i=1;i<999999;i++)
     {

@@ -46,9 +46,9 @@ spi_nrf24L01.SettingsSPI(
 
 
 static std::vector<uint8_t> RxData;
-static std::vector<uint8_t> RxAddress{0x00,0xDD,0xCC,0xBB,0xAA};
+static std::vector<uint8_t> RxAddress{0xB3,0xB4,0xB5,0xB6,0xCD};
 static std::vector<uint8_t> TxData{0x77,0x77,0x77};
-static std::vector<uint8_t> TxAddress{0xEE,0xDD,0xCC,0xBB,0xAA};
+static std::vector<uint8_t> TxAddress{0xB3,0xB4,0xB5,0xB6,0xCD};
 
 
 uint8_t data[50];
@@ -66,21 +66,20 @@ nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P0, std::vector<uint8_t>{0xE1, 0xE1, 
  while(1)
  {
   //RX
-led_pin.SetPinLevel(LVL::HIGH);
+
 if (isDataAvailable(spi_nrf24L01,2) == 1)
 	  {
       NRF24_Receive(spi_nrf24L01,RxData);
-       led_pin.ToglePinLevel();
+      led_pin.ToglePinLevel();
 	  }
 
 //TX
-/*
-    led_pin.SetPinLevel(LVL::HIGH);
+    /*
 	  if (NRF24_Transmit(spi_nrf24L01,TxData) == 1)
 	  {
-      led_pin.SetPinLevel(LVL::LOW);
+      led_pin.ToglePinLevel();
 	  }
-    for(int i=1;i<999999;i++)
+    for(int i=1;i<9999;i++)
     {
       int k=i+5-3;
     }*/
