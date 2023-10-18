@@ -24,8 +24,8 @@
  static std::array<uint8_t,32> data;
  uint8_t *ptr;
  extern PINx CE_pin(GPIOA,4);
- extern PINx led_pin(GPIOA,4);
-
+ extern PINx led_pin(GPIOC,13);
+extern PINx IRQ_pin(GPIOA,2);
 //******************************************************************//
 void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx)
 {
@@ -48,6 +48,8 @@ void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value)
  Buffer_tx.resize(2);
  Buffer_tx.at(0)=reg|W_REGISTER;
  Buffer_tx.at(1)=value;
+ uint8_t temp1= Buffer_tx.at(0);
+uint8_t temp2= Buffer_tx.at(1);
  spi_nrf24L01.Transmitt(Buffer_tx);
 }
 //******************************************************************//
@@ -150,10 +152,16 @@ uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data)
 {
     nrf24_Write_Reg_multi(spi_nrf24L01,W_TX_PAYLOAD, data);
 	//uint8_t fifostatus = nrf24_ReadReg(FIFO_STATUS);
-	 for(int i=1;i<9999999;i++) //HAL_Delay(1);
+
+	 for(int i=1;i<99999;i++) //HAL_Delay(1);
     {
       int k=i+5-3;
     }
+		while (1)//Ждем пока байт не передан
+	{
+		if(IRQ_pin.GetPinLevel()==0)
+		break;
+	}
     nrf24_Read_Reg(spi_nrf24L01,FIFO_STATUS,std::vector<uint8_t>(1,0));
 	uint8_t fifostatus =data.at(1);
 	// check the fourth bit of FIFO_STATUS to know if the TX fifo is empty
@@ -169,6 +177,31 @@ uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data)
 		return 1;
 	}
 	return 0;
+}
+
+void delay()
+{
+	for(int i=0;i<99999;i++)
+	{
+		i=i++;
+	}
+}
+
+void NRF24_RxMode2 (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t channel)
+{
+CE_pin.SetPinLevel(LVL::LOW);
+nrf24_Write_Reg (spi_nrf24L01,CONFIG,(1<<PWR_UP)|(1<<EN_CRC)|(0<<PRIM_RX));
+delay();
+nrf24_Write_Reg (spi_nrf24L01,CONFIG,(1<<PWR_UP)|(1<<EN_CRC)|(1<<PRIM_RX));
+CE_pin.SetPinLevel(LVL::HIGH);
+delay();
+}
+
+void NRF24_TxMode2 (SPI& spi_nrf24L01,std::vector<uint8_t> Address, uint8_t channel)
+{
+CE_pin.SetPinLevel(LVL::LOW);
+nrf24_Write_Reg (spi_nrf24L01,CONFIG,(1<<PWR_UP)|(1<<EN_CRC)|(0<<PRIM_RX));
+delay();
 }
 
 void NRF24_RxMode (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t channel)
@@ -215,6 +248,7 @@ uint8_t isDataAvailable (SPI& spi_nrf24L01,int pipenum)
 {
 	nrf24_Read_Reg(spi_nrf24L01,STATUS,std::vector<uint8_t>(1,0));
 	volatile uint8_t status =data.at(1);
+//	status=0x4E;
 	if ((status&(1<<6))&&(status&(pipenum<<1)))
 	{
 		nrf24_Write_Reg(spi_nrf24L01,STATUS, (1<<6));

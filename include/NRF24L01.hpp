@@ -56,6 +56,10 @@ void NRF24_Receive (SPI& spi_nrf24L01,std::vector<uint8_t> data);
 uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data);
 
 
+void NRF24_RxMode2 (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t channel);
+void NRF24_TxMode2 (SPI& spi_nrf24L01,std::vector<uint8_t> Address, uint8_t channel);
+
+
 /* Memory Map */
 #define CONFIG      0x00
 #define EN_AA       0x01
@@ -97,5 +101,15 @@ uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data);
 #define FLUSH_RX      0xE2
 #define REUSE_TX_PL   0xE3
 #define NOP           0xFF
+
+
+
+       // #define MASK_RX_DR  6 //вкл/откл прерывание от бита RX_DR в рег. STATUS. 0-вкл, 1-выкл.
+       // #define MASK_TX_DS  5 //вкл/откл прерывание от бита TX_DS в рег. STATUS. 0-вкл, 1-выкл.
+        //#define MASK_MAX_RT 4 //вкл/откл прерывание от бита MAX_RT в рег. STATUS. 0-вкл, 1-выкл.
+        #define EN_CRC      3 //включение CRC. По умолчанию вкл. если один из битов регистра EN_AA включен.
+       // #define CRCO        2 //режим CRC. 0-1 байт, 1-2 байта.
+        #define PWR_UP      1 //1-POWER UP, 0-POWER DOWN, по умолчанию 0.
+        #define PRIM_RX     0 //0-режим передачи, 1-режим приема.
 
 #endif /* INC_NRF24L01_H_ */
