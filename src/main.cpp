@@ -46,16 +46,21 @@ spi_nrf24L01.SettingsSPI(
             RegDMACR::RXDMA_DIS);
 
 static std::vector<uint8_t> RxData;
-static std::vector<uint8_t> RxAddress{0xB3,0xB4,0xB5,0xB6,0xCD};
+//static std::vector<uint8_t> RxAddress{0xB3,0xB4,0xB5,0xB6,0xCD};
 static std::vector<uint8_t> TxData{0x77,0x77,0x77};
-static std::vector<uint8_t> TxAddress{0xB3,0xB4,0xB5,0xB6,0xCD};
+//static std::vector<uint8_t> TxAddress{0xB3,0xB4,0xB5,0xB6,0xCD};
 
+static std::vector<uint8_t> RxAddress{49,78,111,100,101};
+static std::vector<uint8_t> TxAddress{49,78,111,100,101};
 uint8_t data[50];
 
 NRF24_Init(spi_nrf24L01);
-//NRF24_RxMode(spi_nrf24L01,RxAddress, 10);
-//NRF24_TxMode(spi_nrf24L01,TxAddress, 10);
-NRF24_TxMode(spi_nrf24L01,TxAddress, 10);
+//NRF24_RxMode(spi_nrf24L01,RxAddress, 15);
+NRF24_TxMode2(spi_nrf24L01,TxAddress, 5);
+
+// setChannel(spi_nrf24L01,15);
+ //nrf24_Read_Reg(spi_nrf24L01,RF_CH,std::vector<uint8_t>(1,0));
+//NRF24_TxMode(spi_nrf24L01,TxAddress, 100);
 /*
 nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P0, std::vector<uint8_t>{0xE1, 0xE1, 0xE1, 0xE1, 0xE1});
 */
@@ -63,20 +68,23 @@ nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P0, std::vector<uint8_t>{0xE1, 0xE1, 
 
  while(1)
  {
-  //RX
+  //RX5
 /*
 if (isDataAvailable(spi_nrf24L01,2) == 1)
 	  {
       NRF24_Receive(spi_nrf24L01,RxData);
       led_pin.ToglePinLevel();
-	  }*/
-
+	  }
+*/
 //TX
-    
-	  if (NRF24_Transmit(spi_nrf24L01,TxData) == 1)
+
+    if (NRF24_Transmit(spi_nrf24L01,TxData) == 1)
 	  {
       led_pin.ToglePinLevel();
 	  }
-   
- }
+ nrf24_Read_Reg(spi_nrf24L01,CONFIG,std::vector<uint8_t>(1,0));
+   led_pin.ToglePinLevel();
+  }
+
+
  }

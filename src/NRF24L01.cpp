@@ -32,13 +32,17 @@ void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx
  Buffer_rx.reserve(1);
  Buffer_rx.insert(Buffer_rx.begin(),reg|R_REGISTER);
  volatile uint8_t size2=Buffer_rx.size();
+ uint8_t temp1=0,temp2=0;
  spi_nrf24L01.Recieve(Buffer_rx);
  ptr= reinterpret_cast<uint8_t*>(data.data());
  size2=Buffer_rx.size();
+ temp1=Buffer_rx.at(0);
+ temp2=Buffer_rx.at(1);
  for (uint8_t i=0;i<size2;i++)
  {
    data.at(i)=Buffer_rx.at(i);
  }
+ size2=Buffer_rx.size();
  }
 //******************************************************************//
 void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value)
@@ -93,7 +97,7 @@ uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG)
 	nrf24_Write_Reg(spi_nrf24L01,SETUP_AW, 0x03);
 	nrf24_Write_Reg(spi_nrf24L01,SETUP_RETR, 0x03);
 	nrf24_Write_Reg(spi_nrf24L01,RF_CH, 0x02);
-	nrf24_Write_Reg(spi_nrf24L01,RF_SETUP, 0x0E);
+	nrf24_Write_Reg(spi_nrf24L01,RF_SETUP, 0x0C);
 	nrf24_Write_Reg(spi_nrf24L01,STATUS, 0x00);
 	nrf24_Write_Reg(spi_nrf24L01,OBSERVE_TX, 0x00);
 	nrf24_Write_Reg(spi_nrf24L01,CD, 0x00);
@@ -153,15 +157,15 @@ uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data)
     nrf24_Write_Reg_multi(spi_nrf24L01,W_TX_PAYLOAD, data);
 	//uint8_t fifostatus = nrf24_ReadReg(FIFO_STATUS);
 
-	 for(int i=1;i<99999;i++) //HAL_Delay(1);
+	/* for(int i=1;i<99999;i++) //HAL_Delay(1);
     {
       int k=i+5-3;
-    }
-		while (1)//Ждем пока байт не передан
+    }*/
+		/*while (1)//Ждем пока байт не передан
 	{
 		if(IRQ_pin.GetPinLevel()==0)
 		break;
-	}
+	}*/
     nrf24_Read_Reg(spi_nrf24L01,FIFO_STATUS,std::vector<uint8_t>(1,0));
 	uint8_t fifostatus =data.at(1);
 	// check the fourth bit of FIFO_STATUS to know if the TX fifo is empty
@@ -215,8 +219,8 @@ void NRF24_RxMode (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t chan
 	//unt8_t en_rxaddr = nrf24_ReadReg(EN_RXADDR);
 	nrf24_Read_Reg(spi_nrf24L01,EN_RXADDR,std::vector<uint8_t>(1,0));
 	uint8_t en_rxaddr =data.at(1);
-	//en_rxaddr = en_rxaddr | (1<<2);
-	//nrf24_Write_Reg (spi_nrf24L01,EN_RXADDR, en_rxaddr);
+	en_rxaddr = en_rxaddr | (1<<2);
+	nrf24_Write_Reg (spi_nrf24L01,EN_RXADDR, en_rxaddr);
 	/* We must write the address for Data Pipe 1, if we want to use any pipe from 2 to 5
 	 * The Address from DATA Pipe 2 to Data Pipe 5 differs only in the LSB
 	 * Their 4 MSB Bytes will still be same as Data Pipe 1
@@ -277,4 +281,13 @@ void NRF24_Receive (SPI& spi_nrf24L01,std::vector<uint8_t> data)
     }
 	//cmdtosend = FLUSH_RX;
 	nrfsendCmd(spi_nrf24L01,std::vector<uint8_t>{FLUSH_RX});
+}
+
+/******************************************/
+void setChannel(SPI& spi_nrf24L01,uint8_t channel)
+{
+ if(channel<128)
+ {
+  nrf24_Write_Reg(spi_nrf24L01,RF_CH,channel);
+ }
 }
