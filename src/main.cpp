@@ -14,14 +14,19 @@ PINx led_pin(GPIOC,13);
 PINx CE_pin(GPIOA,4);
 PINx IRQ_pin(GPIOA,2);
 
-UARTLines uart_log{   USART1,2000000,
+
+UARTLines uart_log{USART1,2000000,
                       PINx(GPIOA,9),
                       PINx(GPIOA,10)};
+
+ 
  ClockSystem clock(pin_mco, uart_log);
 
   CE_pin.Settings(TYPE::OUTPUT_GPO_Push_Pull,LVL::LOW);
   led_pin.Settings(TYPE::OUTPUT_GPO_Push_Pull,LVL::LOW);
   IRQ_pin.Settings(TYPE::INPUT_Pull_Down,LVL::LOW);
+
+
  PINx spi_nrf24_mosi(GPIOA,7);
  PINx spi_nrf24_miso(GPIOA,6);
  PINx spi_nrf24_sck(GPIOA,5);
@@ -45,6 +50,8 @@ spi_nrf24L01.SettingsSPI(
             RegDMACR::TXDMA_DIS,
             RegDMACR::RXDMA_DIS);
 
+
+
 static std::vector<uint8_t> RxData;
 //static std::vector<uint8_t> RxAddress{0xB3,0xB4,0xB5,0xB6,0xCD};
 static std::vector<uint8_t> TxData{0x77,0x77,0x77};
@@ -56,10 +63,14 @@ uint8_t data[50];
 
 NRF24_Init(spi_nrf24L01);
 //NRF24_RxMode(spi_nrf24L01,RxAddress, 15);
-NRF24_TxMode2(spi_nrf24L01,TxAddress, 5);
+NRF24_TxMode2(spi_nrf24L01,TxAddress,15);
 
 // setChannel(spi_nrf24L01,15);
- //nrf24_Read_Reg(spi_nrf24L01,RF_CH,std::vector<uint8_t>(1,0));
+ nrf24_Read_Reg(spi_nrf24L01,RF_CH,std::vector<uint8_t>(1,0));
+ nrf24_Read_Reg(spi_nrf24L01,EN_AA,std::vector<uint8_t>(1,0));
+ nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P2,std::vector<uint8_t>(1,0));
+ MESSAGE_INFO(" Functional Control : Started\n");
+
 //NRF24_TxMode(spi_nrf24L01,TxAddress, 100);
 /*
 nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P0, std::vector<uint8_t>{0xE1, 0xE1, 0xE1, 0xE1, 0xE1});
@@ -77,6 +88,8 @@ if (isDataAvailable(spi_nrf24L01,2) == 1)
 	  }
 */
 //TX
+ MESSAGE_INFO(" Functional Control : Started\n");
+
 
     if (NRF24_Transmit(spi_nrf24L01,TxData) == 1)
 	  {

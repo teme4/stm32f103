@@ -21,6 +21,8 @@
 #include "NRF24L01.hpp"
 #include <stm32f1xx.h>
 
+
+
  static std::array<uint8_t,32> data;
  uint8_t *ptr;
  extern PINx CE_pin(GPIOA,4);
@@ -29,15 +31,18 @@ extern PINx IRQ_pin(GPIOA,2);
 //******************************************************************//
 void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx)
 {
+	
+
  Buffer_rx.reserve(1);
  Buffer_rx.insert(Buffer_rx.begin(),reg|R_REGISTER);
  volatile uint8_t size2=Buffer_rx.size();
- uint8_t temp1=0,temp2=0;
+ //uint8_t temp1=0,temp2=0;
  spi_nrf24L01.Recieve(Buffer_rx);
  ptr= reinterpret_cast<uint8_t*>(data.data());
- size2=Buffer_rx.size();
- temp1=Buffer_rx.at(0);
- temp2=Buffer_rx.at(1);
+ //size2=Buffer_rx.size();
+ //temp1=Buffer_rx.at(0);
+ //temp2=Buffer_rx.at(1);
+ //usart_1.Transmitt(Buffer_rx);
  for (uint8_t i=0;i<size2;i++)
  {
    data.at(i)=Buffer_rx.at(i);
