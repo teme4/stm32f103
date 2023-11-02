@@ -59,6 +59,15 @@ class UART : public DigitalInterface
     {
         HardwareSettings();
     }
+    
+    UART(UARTLines &UART_1):
+            UARTx(UART_1.UARTx),
+            BaudRate(UART_1.BaudRate),
+            _TxD(std::move(std::make_unique<PINx>(UART_1.TxD))),
+            _RxD(std::move(std::make_unique<PINx>(UART_1.RxD)))
+    {
+        HardwareSettings();
+    }
 
     UART()                        = delete;
     UART(UART const &)            = default;
