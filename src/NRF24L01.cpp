@@ -21,7 +21,7 @@
 #include "NRF24L01.hpp"
 #include <stm32f1xx.h>
 extern PINx pin_mco(GPIOA,8);
-extern UARTLines uart_log{USART1,115200,
+extern UARTLines uart_log{USART1,256000,
                       PINx(GPIOA,9),
                       PINx(GPIOA,10)};
 
@@ -36,22 +36,13 @@ extern PINx IRQ_pin(GPIOA,2);
 //******************************************************************//
 void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx)
 {
+ char buff[100];
  Buffer_rx.reserve(1);
  Buffer_rx.insert(Buffer_rx.begin(),reg|R_REGISTER);
- volatile uint8_t size2=Buffer_rx.size();
- uint8_t temp1=0,temp2=0;
  spi_nrf24L01.Recieve(Buffer_rx);
- //ptr= reinterpret_cast<uint8_t*>(data.data());
- //size2=Buffer_rx.size();
- temp1=Buffer_rx.at(0);
- temp2=Buffer_rx.at(1);
- //uart__1.Transmitt(Buffer_rx);
- bool stat=uart__1.CheckFlagIDLE();
-  for (uint8_t i=0;i<size2;i++)
- {
-   data.at(i)=Buffer_rx.at(i);
- }
- size2=Buffer_rx.size();
+/*
+ uart__1.Transmitt(Buffer_rx);
+ uart_transsmite_text(buff);*/
  }
 //******************************************************************//
 void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value)
@@ -299,4 +290,16 @@ void setChannel(SPI& spi_nrf24L01,uint8_t channel)
  {
   nrf24_Write_Reg(spi_nrf24L01,RF_CH,channel);
  }
+}
+
+void uart_transsmite_text(char* data,uint8_t len)
+{
+std::vector<uint8_t> tx_buf;
+tx_buf.reserve(len+1);
+for(int i=0;i<len;i++)
+{
+tx_buf.insert(tx_buf.begin()+i,*data++);
+}
+tx_buf.push_back(0x0d);
+uart__1.Transmitt(tx_buf);
 }

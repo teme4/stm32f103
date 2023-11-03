@@ -1,7 +1,7 @@
 #include <stm32f1xx.h>
 #include "NRF24L01.hpp"
-#include "tim_Delay.hpp"
 
+#include <stdio.h>
 #include <DigitalInterface/drivers.hpp>
 #include <PortDriver/pin.hpp>
 #include <Time&Sync/drivers.hpp>
@@ -14,10 +14,9 @@ PINx led_pin(GPIOC,13);
 PINx CE_pin(GPIOA,4);
 PINx IRQ_pin(GPIOA,2);
 
-
-UARTLines uart_log{USART1,115200,
-                      PINx(GPIOA,9),
-                      PINx(GPIOA,10)};
+UARTLines uart_log{USART1,256000,
+                      PINx(GPIOA,9),//TxD
+                      PINx(GPIOA,10)};//RxD
 
  // ClockSystem clock(pin_mco, uart_log);
 UART uart__1(uart_log);
@@ -58,20 +57,24 @@ static std::vector<uint8_t> TxData{0x77,0x77,0x77};
 
 static std::vector<uint8_t> RxAddress{49,78,111,100,101};
 static std::vector<uint8_t> TxAddress{49,78,111,100,101};
+
 uint8_t data[50];
 
 NRF24_Init(spi_nrf24L01);
 //NRF24_RxMode(spi_nrf24L01,RxAddress, 15);
 //NRF24_TxMode2(spi_nrf24L01,TxAddress,15);
- //uart__1.Transmitt(Buffer_rx);
 // setChannel(spi_nrf24L01,15);
-
-uart__1.Transmitt(TxAddress);
+char uart_buff[50];
+uart_buff*="EN_AA";
+uint8_t len=strlen(uart_buff);
+ uart_transsmite_text(uart_buff,strlen(uart_buff));
  nrf24_Read_Reg(spi_nrf24L01,RF_CH,std::vector<uint8_t>(1,0));
+ uart_transsmite_text(uart_buff,strlen(uart_buff));
  nrf24_Read_Reg(spi_nrf24L01,EN_AA,std::vector<uint8_t>(1,0));
- nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P2,std::vector<uint8_t>(1,0));
+ //uart_transsmite_text("RX_ADDR_P2");
+ //nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P2,std::vector<uint8_t>(1,0));
  //MESSAGE_INFO(" Functional Control : Started\n");
-
+//uart__1.Transmitt();
 
 
 //NRF24_TxMode(spi_nrf24L01,TxAddress, 100);
@@ -91,11 +94,14 @@ if (isDataAvailable(spi_nrf24L01,2) == 1)
 	  }
 */
 //TX
-uart__1.Transmitt(TxAddress);
+
     if (NRF24_Transmit(spi_nrf24L01,TxData) == 1)
 	  {
       led_pin.ToglePinLevel();
 	  }
+
+
+
     /*
  nrf24_Read_Reg(spi_nrf24L01,CONFIG,std::vector<uint8_t>(1,0));
   nrf24_Read_Reg(spi_nrf24L01,CONFIG,std::vector<uint8_t>(1,0));
@@ -103,6 +109,4 @@ uart__1.Transmitt(TxAddress);
     nrf24_Read_Reg(spi_nrf24L01,CONFIG,std::vector<uint8_t>(1,0));
    led_pin.ToglePinLevel();*/
   }
-
-
  }

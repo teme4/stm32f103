@@ -58,7 +58,7 @@ uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data);
 
 void NRF24_RxMode2 (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t channel);
 void NRF24_TxMode2 (SPI& spi_nrf24L01,std::vector<uint8_t> Address, uint8_t channel);
-
+void uart_transsmite_text(char* data,uint8_t len);
 
 
 /******************************************/
