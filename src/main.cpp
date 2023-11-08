@@ -64,7 +64,7 @@ NRF24_Init(spi_nrf24L01);
 //NRF24_RxMode(spi_nrf24L01,RxAddress, 15);
 NRF24_TxMode2(spi_nrf24L01,TxAddress,15);
 setChannel(spi_nrf24L01,15);
-setPALevel(spi_nrf24L01, RF_PWR_HIGH);
+setPALevel(spi_nrf24L01, RF24_PA_MAX);
  /*
 char uart_buff[100];
 strcpy(uart_buff, "SETUP_AW");
