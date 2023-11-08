@@ -38,6 +38,17 @@
 #include <DigitalInterface/drivers.hpp>
 #include <Time&Sync/drivers.hpp>
 
+typedef enum
+{
+RF24_PA_MIN = 0,
+RF24_PA_LOW,
+RF24_PA_HIGH,
+RF24_PA_MAX,
+RF24_PA_ERROR
+}
+rf24_pa_dbm_e ;
+
+
 //void nrf24_WriteReg (uint8_t Reg, uint8_t Data);
 //void nrf24_WriteRegMulti (uint8_t Reg, uint8_t *data, int size);
 //void nrf24_ReadReg_Multi (uint8_t Reg, uint8_t *data, int size);
@@ -50,7 +61,7 @@ void NRF24_RxMode (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t chan
 uint8_t isDataAvailable (SPI& spi_nrf24L01,int pipenum);
 void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value);
 void nrf24_Write_Reg_multi(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_tx);
-void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx);
+uint8_t nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx);
 uint8_t nrf24_reset(SPI& spi_nrf24L01,uint8_t REG);
 void NRF24_Receive (SPI& spi_nrf24L01,std::vector<uint8_t> data);
 uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data);
@@ -58,8 +69,14 @@ uint8_t NRF24_Transmit (SPI& spi_nrf24L01,std::vector<uint8_t> data);
 
 void NRF24_RxMode2 (SPI& spi_nrf24L01, std::vector<uint8_t> Address, uint8_t channel);
 void NRF24_TxMode2 (SPI& spi_nrf24L01,std::vector<uint8_t> Address, uint8_t channel);
-void uart_transsmite_text(char* data,uint8_t len);
 
+
+
+void uart_transsmite_text(const char* data,uint8_t len);
+uint8_t get_status(SPI& spi_nrf24L01);
+void setPALevel(SPI& spi_nrf24L01,rf24_pa_dbm_e level);
+void powerDown(SPI& spi_nrf24L01);
+void powerUp(SPI& spi_nrf24L01);
 
 /******************************************/
 void setChannel(SPI& spi_nrf24L01,uint8_t channel);
@@ -106,6 +123,11 @@ void setChannel(SPI& spi_nrf24L01,uint8_t channel);
 #define REUSE_TX_PL   0xE3
 #define NOP           0xFF
 
+/* P model bit Mnemonics */
+#define RF_DR_LOW   5
+#define RF_DR_HIGH  3
+#define RF_PWR_LOW  1
+#define RF_PWR_HIGH 2
 
 
        // #define MASK_RX_DR  6 //вкл/откл прерывание от бита RX_DR в рег. STATUS. 0-вкл, 1-выкл.

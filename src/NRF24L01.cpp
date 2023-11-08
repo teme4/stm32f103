@@ -32,17 +32,22 @@ extern UARTLines uart_log{USART1,256000,
  uint8_t *ptr;
  extern PINx CE_pin(GPIOA,4);
  extern PINx led_pin(GPIOC,13);
-extern PINx IRQ_pin(GPIOA,2);
+ extern PINx IRQ_pin(GPIOA,2);
+
+ volatile uint8_t temp1,temp2;
 //******************************************************************//
-void nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx)
+uint8_t nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx)
 {
  char buff[100];
  Buffer_rx.reserve(1);
  Buffer_rx.insert(Buffer_rx.begin(),reg|R_REGISTER);
  spi_nrf24L01.Recieve(Buffer_rx);
-/*
- uart__1.Transmitt(Buffer_rx);
- uart_transsmite_text(buff);*/
+ temp1= Buffer_rx.at(0);
+ temp2= Buffer_rx.at(1);
+ //sprintf(buff,"Value:%x %x",Buffer_rx.at(0),Buffer_rx.at(1));
+ //uart__1.Transmitt(Buffer_rx);
+ //uart_transsmite_text(buff,strlen(buff));
+ return temp2;
  }
 //******************************************************************//
 void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value)
@@ -52,8 +57,8 @@ void nrf24_Write_Reg(SPI& spi_nrf24L01,uint8_t reg,uint8_t value)
  Buffer_tx.resize(2);
  Buffer_tx.at(0)=reg|W_REGISTER;
  Buffer_tx.at(1)=value;
- uint8_t temp1= Buffer_tx.at(0);
-uint8_t temp2= Buffer_tx.at(1);
+ temp1= Buffer_tx.at(0);
+ temp2= Buffer_tx.at(1);
  spi_nrf24L01.Transmitt(Buffer_tx);
 }
 //******************************************************************//
@@ -124,7 +129,7 @@ void NRF24_Init (SPI& spi_nrf24L01)
 {
 	CE_pin.SetPinLevel(LVL::LOW);
 	nrf24_reset (spi_nrf24L01,0);
-	nrf24_Write_Reg(spi_nrf24L01,CONFIG, 0);  // will be configured later
+	nrf24_Write_Reg(spi_nrf24L01,CONFIG, 0x08);  // will be configured later
 	nrf24_Write_Reg(spi_nrf24L01,EN_AA, 0);  // No Auto ACK
 	nrf24_Write_Reg (spi_nrf24L01,EN_RXADDR, 0);  // Not Enabling any data pipe right now
 	nrf24_Write_Reg (spi_nrf24L01,SETUP_AW, 0x03);  // 5 Bytes for the TX/RX address
@@ -292,7 +297,7 @@ void setChannel(SPI& spi_nrf24L01,uint8_t channel)
  }
 }
 
-void uart_transsmite_text(char* data,uint8_t len)
+void uart_transsmite_text(const char* data,uint8_t len)
 {
 std::vector<uint8_t> tx_buf;
 tx_buf.reserve(len+1);
@@ -302,4 +307,63 @@ tx_buf.insert(tx_buf.begin()+i,*data++);
 }
 tx_buf.push_back(0x0d);
 uart__1.Transmitt(tx_buf);
+}
+////////////////////////////////////////////////////////////////////////////////////////////
+uint8_t get_status(SPI& spi_nrf24L01)
+{
+ uint8_t status;
+ static std::vector<uint8_t> Buffer_tx;
+ Buffer_tx.resize(2);
+ Buffer_tx.at(0)=NOP;
+ spi_nrf24L01.Transmitt(Buffer_tx);
+ status=Buffer_tx.at(0);
+  return status;
+}
+
+void setPayloadSize(uint8_t size)
+{
+  const uint8_t max_payload_size = 32;
+ // payload_size = min(size,max_payload_size);
+}
+
+void setPALevel(SPI& spi_nrf24L01,rf24_pa_dbm_e level)
+{
+  uint8_t setup = nrf24_Read_Reg(spi_nrf24L01,RF_SETUP,std::vector<uint8_t>(1,0));
+  setup &= ~((RF_PWR_LOW) | (RF_PWR_HIGH));
+
+  // switch uses RAM (evil!)
+  if ( level == RF24_PA_MAX )
+  {
+    setup |= ((RF_PWR_LOW) |(RF_PWR_HIGH)) ;
+  }
+  else if ( level == RF24_PA_HIGH )
+  {
+    setup |=(RF_PWR_HIGH) ;
+  }
+  else if ( level == RF24_PA_LOW )
+  {
+    setup |=(RF_PWR_LOW);
+  }
+  else if ( level == RF24_PA_MIN )
+  {
+  }
+  else if ( level == RF24_PA_ERROR )
+  {
+    setup |= ((RF_PWR_LOW) |(RF_PWR_HIGH)) ;
+  }
+  nrf24_Write_Reg(spi_nrf24L01,RF_SETUP, setup);
+}
+
+void powerDown(SPI& spi_nrf24L01)
+{
+	uint8_t res=nrf24_Read_Reg(spi_nrf24L01,RF_SETUP,std::vector<uint8_t>(1,0));
+	nrf24_Write_Reg(spi_nrf24L01,CONFIG, res & PWR_UP);
+}
+
+/****************************************************************************/
+
+void powerUp(SPI& spi_nrf24L01)
+{
+	uint8_t res=nrf24_Read_Reg(spi_nrf24L01,RF_SETUP,std::vector<uint8_t>(1,0));
+	nrf24_Write_Reg(spi_nrf24L01,CONFIG, res | PWR_UP);
 }

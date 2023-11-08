@@ -18,7 +18,7 @@ UARTLines uart_log{USART1,256000,
                       PINx(GPIOA,9),//TxD
                       PINx(GPIOA,10)};//RxD
 
- // ClockSystem clock(pin_mco, uart_log);
+  //ClockSystem clock(pin_mco, uart_log);
 UART uart__1(uart_log);
   CE_pin.Settings(TYPE::OUTPUT_GPO_Push_Pull,LVL::LOW);
   led_pin.Settings(TYPE::OUTPUT_GPO_Push_Pull,LVL::LOW);
@@ -62,15 +62,20 @@ uint8_t data[50];
 
 NRF24_Init(spi_nrf24L01);
 //NRF24_RxMode(spi_nrf24L01,RxAddress, 15);
-//NRF24_TxMode2(spi_nrf24L01,TxAddress,15);
-// setChannel(spi_nrf24L01,15);
-char uart_buff[50];
-uart_buff*="EN_AA";
-uint8_t len=strlen(uart_buff);
+NRF24_TxMode2(spi_nrf24L01,TxAddress,15);
+setChannel(spi_nrf24L01,15);
+setPALevel(spi_nrf24L01, RF_PWR_HIGH);
+ /*
+char uart_buff[100];
+strcpy(uart_buff, "SETUP_AW");
  uart_transsmite_text(uart_buff,strlen(uart_buff));
- nrf24_Read_Reg(spi_nrf24L01,RF_CH,std::vector<uint8_t>(1,0));
+ nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P2,std::vector<uint8_t>(1,0));
+ strcpy(uart_buff, "RF_SETUP");
  uart_transsmite_text(uart_buff,strlen(uart_buff));
- nrf24_Read_Reg(spi_nrf24L01,EN_AA,std::vector<uint8_t>(1,0));
+ nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P3,std::vector<uint8_t>(1,0));*/
+
+
+
  //uart_transsmite_text("RX_ADDR_P2");
  //nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P2,std::vector<uint8_t>(1,0));
  //MESSAGE_INFO(" Functional Control : Started\n");
@@ -94,11 +99,12 @@ if (isDataAvailable(spi_nrf24L01,2) == 1)
 	  }
 */
 //TX
-
-    if (NRF24_Transmit(spi_nrf24L01,TxData) == 1)
+get_status(spi_nrf24L01);
+  
+  /*  if (NRF24_Transmit(spi_nrf24L01,TxData) == 1)
 	  {
       led_pin.ToglePinLevel();
-	  }
+	  }*/
 
 
 
