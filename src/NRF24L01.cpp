@@ -367,3 +367,21 @@ void powerUp(SPI& spi_nrf24L01)
 	uint8_t res=nrf24_Read_Reg(spi_nrf24L01,RF_SETUP,std::vector<uint8_t>(1,0));
 	nrf24_Write_Reg(spi_nrf24L01,CONFIG, res | PWR_UP);
 }
+
+uint8_t flush_rx(SPI& spi_nrf24L01)
+{
+static std::vector<uint8_t> Buffer_tx;
+ Buffer_tx.resize(2);
+ Buffer_tx.at(0)=FLUSH_RX;
+ spi_nrf24L01.Transmitt(Buffer_tx);
+}
+
+/****************************************************************************/
+
+uint8_t flush_tx(SPI& spi_nrf24L01)
+{
+	static std::vector<uint8_t> Buffer_tx;
+ Buffer_tx.resize(2);
+ Buffer_tx.at(0)=FLUSH_TX;
+   spi_nrf24L01.Transmitt(Buffer_tx); 
+}
