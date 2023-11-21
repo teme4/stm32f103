@@ -77,6 +77,10 @@ uint8_t get_status(SPI& spi_nrf24L01);
 void setPALevel(SPI& spi_nrf24L01,rf24_pa_dbm_e level);
 void powerDown(SPI& spi_nrf24L01);
 void powerUp(SPI& spi_nrf24L01);
+void begin(SPI& spi_nrf24L01);
+void setAutoAck(SPI& spi_nrf24L01,bool enable);
+void startListening(SPI& spi_nrf24L01);
+
 
 /******************************************/
 void setChannel(SPI& spi_nrf24L01,uint8_t channel);

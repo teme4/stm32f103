@@ -60,11 +60,15 @@ static std::vector<uint8_t> TxAddress{49,78,111,100,101};
 
 uint8_t data[50];
 
-NRF24_Init(spi_nrf24L01);
+  begin(spi_nrf24L01);
+  setAutoAck(spi_nrf24L01,false);
+  startListening(spi_nrf24L01);
+  //printDetails(spi_nrf24L01);
+
 //NRF24_RxMode(spi_nrf24L01,RxAddress, 15);
-NRF24_TxMode2(spi_nrf24L01,TxAddress,15);
-setChannel(spi_nrf24L01,15);
-setPALevel(spi_nrf24L01, RF24_PA_MAX);
+//NRF24_TxMode2(spi_nrf24L01,TxAddress,15);
+//setChannel(spi_nrf24L01,15);
+//setPALevel(spi_nrf24L01, RF24_PA_MAX);
  /*
 char uart_buff[100];
 strcpy(uart_buff, "SETUP_AW");
@@ -73,8 +77,6 @@ strcpy(uart_buff, "SETUP_AW");
  strcpy(uart_buff, "RF_SETUP");
  uart_transsmite_text(uart_buff,strlen(uart_buff));
  nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P3,std::vector<uint8_t>(1,0));*/
-
-
 
  //uart_transsmite_text("RX_ADDR_P2");
  //nrf24_Read_Reg(spi_nrf24L01,RX_ADDR_P2,std::vector<uint8_t>(1,0));

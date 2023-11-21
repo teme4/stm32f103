@@ -35,6 +35,15 @@ extern UARTLines uart_log{USART1,256000,
  extern PINx IRQ_pin(GPIOA,2);
 
  volatile uint8_t temp1,temp2;
+
+typedef enum
+{
+ RF24_1MBPS = 0,
+ RF24_2MBPS,
+ RF24_250KBPS
+}
+ rf24_datarate_e;
+
 //******************************************************************//
 uint8_t nrf24_Read_Reg(SPI& spi_nrf24L01,uint8_t reg,std::vector<uint8_t> Buffer_rx)
 {
@@ -317,7 +326,7 @@ uint8_t get_status(SPI& spi_nrf24L01)
  Buffer_tx.at(0)=NOP;
  spi_nrf24L01.Transmitt(Buffer_tx);
  status=Buffer_tx.at(0);
-  return status;
+return status;
 }
 
 void setPayloadSize(uint8_t size)
@@ -384,4 +393,115 @@ uint8_t flush_tx(SPI& spi_nrf24L01)
  Buffer_tx.resize(2);
  Buffer_tx.at(0)=FLUSH_TX;
    spi_nrf24L01.Transmitt(Buffer_tx); 
+}
+
+
+
+bool setDataRate(SPI& spi_nrf24L01,rf24_datarate_e speed)
+{
+  bool result = false;
+  uint8_t setup =nrf24_Read_Reg(spi_nrf24L01,RF_SETUP,std::vector<uint8_t>(1,0));
+  // HIGH and LOW '00' is 1Mbs - our default
+  setup &= ~((RF_DR_LOW) |(RF_DR_HIGH));//Set 1Mbs
+
+  if( speed == RF24_250KBPS )
+  {
+    // Must set the RF_DR_LOW to 1; RF_DR_HIGH (used to be RF_DR) is already 0
+    // Making it '10'.
+    //wide_band = false ;
+    setup |=( RF_DR_LOW );
+  }
+  else
+  {
+    // Set 2Mbs, RF_DR (RF_DR_HIGH) is set 1
+    // Making it '01'
+    if ( speed == RF24_2MBPS )
+    {
+     // wide_band = true ;
+      setup |= (RF_DR_HIGH);
+    }   
+  }
+ // write_register(RF_SETUP,setup);
+ nrf24_Write_Reg(spi_nrf24L01,RF_SETUP, setup);
+  // Verify our result
+ 
+  if (setup ==nrf24_Read_Reg(spi_nrf24L01,RF_SETUP,std::vector<uint8_t>(1,0)))
+  {
+    result = true;
+  }
+  else{
+	 result = false;
+  }
+  return result;
+}
+
+#define RX_DR       6
+#define TX_DS       5
+#define MAX_RT      4
+
+void begin(SPI& spi_nrf24L01)
+{
+  CE_pin.SetPinLevel(LVL::LOW);
+  CE_pin.SetPinLevel(LVL::HIGH);
+  nrf24_Write_Reg(spi_nrf24L01,SETUP_RETR, (0B0100 << 4) | (0B1111 << 0));
+  setPALevel(spi_nrf24L01,RF24_PA_MAX);
+  // Then set the data rate to the slowest (and most reliable) speed supported by all
+  // hardware.
+  setDataRate(spi_nrf24L01,rf24_datarate_e::RF24_1MBPS);
+
+  // Initialize CRC and request 2-byte (16bit) CRC
+  //setCRCLength(RF24_CRC_16) ;
+  // Disable dynamic payloads, to match dynamic_payloads_enabled setting
+  //write_register(DYNPD,0);
+  nrf24_Write_Reg(spi_nrf24L01,DYNPD,0);
+  // Reset current status
+  // Notice reset and flush is the last thing we do
+  //write_register(STATUS,(RX_DR)|(TX_DS)|(MAX_RT) );
+  nrf24_Write_Reg(spi_nrf24L01,STATUS,(RX_DR)|(TX_DS)|(MAX_RT));
+  // Set up default configuration.  Callers can always change it later.
+  // This channel should be universally safe and not bleed over into adjacent
+  // spectrum.
+  setChannel(spi_nrf24L01,76);
+
+  // Flush buffers
+  flush_rx(spi_nrf24L01);
+  flush_tx(spi_nrf24L01);
+}
+
+
+void setAutoAck(SPI& spi_nrf24L01,bool enable)
+{
+  if (enable)
+    //write_register(EN_AA, B111111);
+	nrf24_Write_Reg(spi_nrf24L01,EN_AA,0B111111);
+  else
+    //write_register(EN_AA, 0);
+	nrf24_Write_Reg(spi_nrf24L01,EN_AA,0);
+}
+static std::vector<uint8_t> RxAddress{49,78,111,100,101};
+void startListening(SPI& spi_nrf24L01)
+{
+	uint8_t temp=nrf24_Read_Reg(spi_nrf24L01,RF_SETUP,std::vector<uint8_t>(1,0));
+
+	nrf24_Write_Reg(spi_nrf24L01,CONFIG,temp|(PWR_UP) |(PRIM_RX));
+	nrf24_Write_Reg(spi_nrf24L01,STATUS,(RX_DR) |(TX_DS) |(MAX_RT));
+
+  //write_register(CONFIG, read_register(CONFIG) | _BV(PWR_UP) | _BV(PRIM_RX));
+ // write_register(STATUS, _BV(RX_DR) | _BV(TX_DS) | _BV(MAX_RT) );
+
+  // Restore the pipe0 adddress, if exists
+  
+    //write_register(RX_ADDR_P0, reinterpret_cast<const uint8_t*>(&pipe0_reading_address), 5);
+	nrf24_Write_Reg_multi(spi_nrf24L01,RX_ADDR_P0,RxAddress);
+
+  // Flush buffers
+  flush_rx(spi_nrf24L01);
+  flush_tx(spi_nrf24L01);
+
+  // Go!
+  CE_pin.SetPinLevel(LVL::HIGH);
+ // ce(HIGH);
+
+  // wait for the radio to come up (130us actually only needed)
+  //delayMicroseconds(130);
 }
